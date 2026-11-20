@@ -37,3 +37,15 @@ AI supports people and does not replace them. Ground answers in approved sources
 protect personal data, keep a person in charge of high-impact decisions, and design for accessibility.
 
 Strategic Plan 2030: <https://www.ivytech.edu/about-ivy-tech/college-operations/strategic-plan/>
+
+## Part 3 Roadblocks: pilot feedback (handout, team copy)
+Pillar 1: Academic & Instructional Quality · Case 2: Alternative-Format Study Tool
+
+| Finding | Pilot user said |
+|---|---|
+| **Finding 1** | "The summaries are still difficult to understand. Let me choose a simpler reading level or another language." |
+| **Finding 2** | "I cannot tell whether the practice questions are based on the material my instructor actually assigned." |
+| **Finding 3** | "When I am still stuck, I need an easy way to find a tutor or ask a real person for help." |
+
+**Roadblock completion check:** in the final demo, the team must identify the two findings addressed, show the
+changes working, and explain how IBM Bob helped implement the iteration. *We are addressing all three.*
