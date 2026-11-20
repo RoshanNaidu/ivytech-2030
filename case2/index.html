@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BIOL 101 Study — Ivy Tech 2030</title>
+  <style>
+    /* ── Reset & base ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green:  #00843D;
+      --green-dk: #005c2a;
+      --gold:   #F0A500;
+      --bg:     #f5f7fa;
+      --surface:#ffffff;
+      --border: #d1d5db;
+      --text:   #1f2328;
+      --muted:  #57606a;
+      --focus:  #3b82f6;
+      --radius: 10px;
+      --gap:    1rem;
+    }
+    html { font-size: 16px; }
+    body {
+      font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100dvh;
+    }
+
+    /* ── Focus ring (keyboard nav) ───────────────────────────── */
+    :focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 3px;
+      border-radius: 4px;
+    }
+
+    /* ── Layout ──────────────────────────────────────────────── */
+    .app-shell {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 0 0 4rem;
+    }
+
+    /* ── Top bar ─────────────────────────────────────────────── */
+    .topbar {
+      background: var(--green);
+      color: #fff;
+      padding: .75rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .topbar__logo {
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: .02em;
+      white-space: nowrap;
+    }
+    .topbar__course {
+      font-size: .8rem;
+      opacity: .85;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .topbar__mode-badge {
+      margin-left: auto;
+      background: var(--gold);
+      color: #000;
+      font-size: .7rem;
+      font-weight: 700;
+      padding: .15rem .5rem;
+      border-radius: 999px;
+      white-space: nowrap;
+      display: none; /* shown only in sample mode */
+    }
+    .topbar__mode-badge.visible { display: inline-block; }
+
+    /* ── Page sections ───────────────────────────────────────── */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin: var(--gap) .75rem 0;
+      padding: 1rem;
+    }
+    .section__title {
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--muted);
+      margin-bottom: .6rem;
+    }
+
+    /* ── Material selector ───────────────────────────────────── */
+    #selector-section select {
+      width: 100%;
+      font-size: 1rem;
+      padding: .6rem .8rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--surface);
+      color: var(--text);
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2357606a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right .8rem center;
+      cursor: pointer;
+    }
+    .material-meta {
+      display: flex;
+      gap: .5rem;
+      margin-top: .5rem;
+      flex-wrap: wrap;
+    }
+    .badge {
+      font-size: .7rem;
+      font-weight: 600;
+      padding: .15rem .5rem;
+      border-radius: 999px;
+      border: 1px solid;
+    }
+    .badge--reading   { color: #0369a1; border-color: #bae6fd; background: #e0f2fe; }
+    .badge--lecture   { color: #6d28d9; border-color: #ddd6fe; background: #ede9fe; }
+    .badge--assigned  { color: #065f46; border-color: #a7f3d0; background: #d1fae5; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: .4rem;
+      font-size: 1rem;
+      font-weight: 600;
+      padding: .65rem 1.2rem;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: background .15s;
+      text-decoration: none;
+    }
+    .btn:disabled { opacity: .45; cursor: default; }
+    .btn--primary {
+      background: var(--green);
+      color: #fff;
+      width: 100%;
+      margin-top: .75rem;
+    }
+    .btn--primary:hover:not(:disabled) { background: var(--green-dk); }
+    .btn--outline {
+      background: transparent;
+      color: var(--green);
+      border: 2px solid var(--green);
+      width: 100%;
+      margin-top: .5rem;
+    }
+    .btn--outline:hover:not(:disabled) { background: #e6f4ec; }
+    .btn--answer {
+      background: var(--gold);
+      color: #000;
+      width: 100%;
+      margin-top: .75rem;
+      font-weight: 700;
+    }
+    .btn--answer:hover:not(:disabled) { background: #c98c00; }
+
+    /* ── Summary component ───────────────────────────────────── */
+    .summary-body {
+      font-size: .95rem;
+      line-height: 1.7;
+    }
+    .source-excerpt {
+      margin-top: .75rem;
+      padding: .6rem .8rem;
+      border-left: 3px solid var(--green);
+      background: #f0faf4;
+      font-size: .82rem;
+      color: var(--muted);
+      border-radius: 0 6px 6px 0;
+    }
+    .source-excerpt strong {
+      display: block;
+      font-size: .7rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--green-dk);
+      margin-bottom: .2rem;
+    }
+    .material-id-line {
+      font-size: .72rem;
+      color: var(--muted);
+      margin-bottom: .4rem;
+    }
+
+    /* ── Practice component ──────────────────────────────────── */
+    .practice-question {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: .75rem;
+    }
+    .options-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+    }
+    .options-list li label {
+      display: flex;
+      align-items: flex-start;
+      gap: .6rem;
+      padding: .6rem .8rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: .95rem;
+      transition: border-color .1s, background .1s;
+    }
+    .options-list li label:hover { border-color: var(--green); background: #f0faf4; }
+    .options-list li input[type="radio"] {
+      margin-top: .2rem;
+      flex-shrink: 0;
+      accent-color: var(--green);
+      width: 1rem;
+      height: 1rem;
+    }
+    .options-list li label.selected-correct {
+      border-color: #00843D;
+      background: #d1fae5;
+    }
+    .options-list li label.selected-wrong {
+      border-color: #dc2626;
+      background: #fee2e2;
+    }
+    .options-list li label.show-correct {
+      border-color: #00843D;
+      background: #d1fae5;
+    }
+
+    .sample-label {
+      font-size: .7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--gold);
+      background: #fff8e7;
+      border: 1px solid #f0a500;
+      border-radius: 999px;
+      padding: .15rem .5rem;
+      margin-bottom: .6rem;
+      display: inline-block;
+    }
+
+    /* ── Answer / explanation ────────────────────────────────── */
+    #answer-reveal {
+      display: none;
+    }
+    #answer-reveal.visible {
+      display: block;
+    }
+    .answer-result {
+      font-size: 1rem;
+      font-weight: 700;
+      padding: .5rem .75rem;
+      border-radius: 6px;
+      margin-bottom: .6rem;
+    }
+    .answer-result--correct { background: #d1fae5; color: #065f46; }
+    .answer-result--wrong   { background: #fee2e2; color: #991b1b; }
+    .answer-result--reveal  { background: #e0f2fe; color: #0c4a6e; }
+    .explanation-text {
+      font-size: .9rem;
+      line-height: 1.65;
+    }
+
+    /* ── Help component ──────────────────────────────────────── */
+    .help-list {
+      display: flex;
+      flex-direction: column;
+      gap: .6rem;
+    }
+    .help-card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: .7rem .9rem;
+    }
+    .help-card__name  { font-weight: 700; font-size: .95rem; }
+    .help-card__role  { font-size: .8rem; color: var(--muted); margin-bottom: .3rem; }
+    .help-card__link  { font-size: .85rem; color: var(--green); text-decoration: none; }
+    .help-card__link:hover { text-decoration: underline; }
+    .help-card__hours { font-size: .78rem; color: var(--muted); margin-top: .15rem; }
+    .help-toggle-btn {
+      background: none;
+      border: none;
+      color: var(--green);
+      font-size: .88rem;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    /* ── Spinner ─────────────────────────────────────────────── */
+    .spinner {
+      display: inline-block;
+      width: 1rem; height: 1rem;
+      border: 2px solid #c8e6c9;
+      border-top-color: var(--green);
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      vertical-align: middle;
+      margin-right: .4rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Hidden utility ──────────────────────────────────────── */
+    .hidden { display: none !important; }
+
+    /* ── Skip-to-content (a11y) ──────────────────────────────── */
+    .skip-link {
+      position: absolute;
+      top: -99px;
+      left: 0;
+      background: var(--focus);
+      color: #fff;
+      padding: .4rem .8rem;
+      border-radius: 0 0 6px 6px;
+      font-size: .9rem;
+      font-weight: 600;
+      z-index: 100;
+      text-decoration: none;
+    }
+    .skip-link:focus { top: 0; }
+
+    /* ── Responsive tweaks ───────────────────────────────────── */
+    @media (min-width: 420px) {
+      .section { margin-left: 1rem; margin-right: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
+<div class="app-shell">
+
+  <!-- ── Top bar ───────────────────────────────────────────── -->
+  <header class="topbar" role="banner">
+    <span class="topbar__logo">📚 Ivy Tech 2030</span>
+    <span class="topbar__course" id="course-label">BIOL 101</span>
+    <span class="topbar__mode-badge" id="sample-mode-badge" aria-live="polite">⚠ Sample Mode</span>
+  </header>
+
+  <main id="main-content">
+
+    <!-- ════════════════════════════════════════════════════════
+         COMPONENT 1: Material Selector
+         ════════════════════════════════════════════════════════ -->
+    <section class="section" id="selector-section" aria-labelledby="selector-title">
+      <div class="section__title" id="selector-title">Select Study Material</div>
+
+      <label for="material-select" class="hidden">Choose a material</label>
+      <select id="material-select" aria-describedby="material-meta-desc">
+        <!-- populated by JS -->
+      </select>
+
+      <div class="material-meta" id="material-meta-desc" aria-live="polite">
+        <!-- populated by JS -->
+      </div>
+
+      <button class="btn btn--primary" id="study-btn" type="button">
+        Study This Material
+      </button>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════
+         COMPONENT 2: Summary
+         ════════════════════════════════════════════════════════ -->
+    <section class="section hidden" id="summary-section" aria-labelledby="summary-title" aria-live="polite">
+      <div class="section__title" id="summary-title">Summary</div>
+      <div id="summary-content">
+        <!-- populated by renderSummary() -->
+      </div>
+      <button class="btn btn--outline hidden" id="practice-btn" type="button">
+        Answer a Practice Question →
+      </button>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════
+         COMPONENT 3: Practice Question
+         ════════════════════════════════════════════════════════ -->
+    <section class="section hidden" id="practice-section" aria-labelledby="practice-title" aria-live="polite">
+      <div class="section__title" id="practice-title">Practice Question</div>
+      <div id="practice-content">
+        <!-- populated by renderPractice() -->
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════
+         COMPONENT 4: Answer & Explanation
+         (embedded inside practice-section, controlled by renderAnswer())
+         ════════════════════════════════════════════════════════ -->
+
+    <!-- ════════════════════════════════════════════════════════
+         COMPONENT 5: Human Help
+         ════════════════════════════════════════════════════════ -->
+    <section class="section" id="help-section" aria-labelledby="help-title">
+      <div class="section__title" id="help-title">Need Help?</div>
+      <p style="font-size:.88rem;color:var(--muted);margin-bottom:.5rem;">
+        AI tools are aids, not authorities. Reach a person any time:
+      </p>
+      <button class="help-toggle-btn" id="help-toggle-btn"
+              aria-expanded="false" aria-controls="help-directory"
+              type="button">
+        Show help directory ▾
+      </button>
+      <div id="help-directory" class="help-list hidden" role="list">
+        <!-- populated by renderHelp() -->
+      </div>
+    </section>
+
+  </main>
+</div><!-- /app-shell -->
+
+<!-- ── ES module: all logic lives here ──────────────────────── -->
+<script type="module">
+import { COURSE, MATERIALS, QUESTION_BANK, HELP_DIRECTORY } from './case_data.js';
+
+/* ══════════════════════════════════════════════════════════════
+   STATE
+   ══════════════════════════════════════════════════════════════ */
+const state = {
+  isSampleMode: false,   // true when AI unavailable
+  currentMaterial: null, // MATERIALS entry
+  currentQuestion: null, // QUESTION_BANK entry
+  answered: false,
+  selectedOption: null,  // "A"|"B"|"C"|"D"
+};
+
+/* ══════════════════════════════════════════════════════════════
+   AI STUB  — replace with real call when endpoint is available
+   Returns a promise that rejects to trigger sample mode.
+   ══════════════════════════════════════════════════════════════ */
+async function callAI(prompt) {
+  // When a real AI backend is wired in, replace this function body:
+  //   const res = await fetch('/api/generate', { method:'POST', body: JSON.stringify({prompt}) });
+  //   return res.json();
+  throw new Error("AI service unavailable — using sample mode");
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SAMPLE GENERATORS (fallback)
+   ══════════════════════════════════════════════════════════════ */
+function buildSampleSummary(material) {
+  const sentences = material.source_text.match(/[^.!?]+[.!?]+/g) || [];
+  const first = sentences.slice(0, 3).join(" ").trim();
+  const last  = sentences.slice(-2).join(" ").trim();
+  return first + (first !== last ? " … " + last : "");
+}
+
+function pickSampleQuestion(materialId) {
+  const pool = QUESTION_BANK[materialId];
+  if (!pool || pool.length === 0) return null;
+  // cycle through questions if more than one
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+/* ══════════════════════════════════════════════════════════════
+   COMPONENT 1 — Selector
+   ══════════════════════════════════════════════════════════════ */
+function initSelector() {
+  const select = document.getElementById('material-select');
+  const metaDiv = document.getElementById('material-meta-desc');
+
+  // Filter to assigned materials only
+  const assigned = MATERIALS.filter(m => m.assigned_by_instructor);
+
+  assigned.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m.id;
+    opt.textContent = `${m.id} — ${m.title}`;
+    select.appendChild(opt);
+  });
+
+  function updateMeta() {
+    const m = assigned.find(x => x.id === select.value);
+    state.currentMaterial = m;
+    metaDiv.innerHTML = m ? `
+      <span class="badge badge--${m.type === 'reading' ? 'reading' : 'lecture'}">
+        ${m.type === 'reading' ? '📄 Reading' : '📝 Lecture Notes'}
+      </span>
+      <span class="badge badge--assigned">✓ Assigned</span>
+    ` : '';
+  }
+
+  select.addEventListener('change', updateMeta);
+  updateMeta(); // prime on load
+
+  document.getElementById('study-btn').addEventListener('click', onStudyClick);
+}
+
+function onStudyClick() {
+  const m = state.currentMaterial;
+  if (!m) return;
+
+  // Reset downstream state
+  state.answered = false;
+  state.selectedOption = null;
+  state.currentQuestion = null;
+
+  document.getElementById('summary-section').classList.remove('hidden');
+  document.getElementById('practice-section').classList.add('hidden');
+  document.getElementById('summary-content').innerHTML =
+    `<span class="spinner" aria-hidden="true"></span> Generating summary…`;
+  document.getElementById('practice-btn').classList.add('hidden');
+  document.getElementById('summary-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  generateSummary(m);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   COMPONENT 2 — Summary
+   ══════════════════════════════════════════════════════════════ */
+async function generateSummary(material) {
+  let summaryText;
+  let usedSampleMode = false;
+
+  try {
+    const result = await callAI(
+      `Summarize the following biology study material in 3–4 sentences for a college student. ` +
+      `Focus on the key concepts. Material: "${material.source_text}"`
+    );
+    summaryText = result.text;
+  } catch {
+    summaryText = buildSampleSummary(material);
+    usedSampleMode = true;
+  }
+
+  if (usedSampleMode) activateSampleMode();
+
+  renderSummary(material, summaryText, usedSampleMode);
+}
+
+function renderSummary(material, summaryText, isSample) {
+  const container = document.getElementById('summary-content');
+  container.innerHTML = `
+    <p class="material-id-line">Material: <strong>${material.id}</strong> · ${material.title}</p>
+    ${isSample ? '<span class="sample-label">Sample summary</span>' : ''}
+    <p class="summary-body">${escHtml(summaryText)}</p>
+    <div class="source-excerpt">
+      <strong>Source excerpt — ${escHtml(material.id)}</strong>
+      ${escHtml(material.excerpt)}
+    </div>
+  `;
+
+  const practiceBtn = document.getElementById('practice-btn');
+  practiceBtn.classList.remove('hidden');
+  practiceBtn.onclick = () => onPracticeClick(material);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   COMPONENT 3 — Practice Question
+   ══════════════════════════════════════════════════════════════ */
+function onPracticeClick(material) {
+  state.answered = false;
+  state.selectedOption = null;
+
+  document.getElementById('practice-section').classList.remove('hidden');
+  document.getElementById('practice-content').innerHTML =
+    `<span class="spinner" aria-hidden="true"></span> Loading question…`;
+  document.getElementById('practice-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  generatePractice(material);
+}
+
+async function generatePractice(material) {
+  let question;
+  let usedSampleMode = false;
+
+  try {
+    // In a real implementation, the AI would generate a question from source_text.
+    // We stub this to always go to sample mode for now.
+    await callAI(`Generate one multiple-choice question from: "${material.source_text}"`);
+  } catch {
+    question = pickSampleQuestion(material.id);
+    usedSampleMode = true;
+  }
+
+  if (usedSampleMode) activateSampleMode();
+
+  if (!question) {
+    document.getElementById('practice-content').innerHTML =
+      `<p style="color:var(--muted);font-size:.9rem;">No practice question available for this material yet.</p>`;
+    return;
+  }
+
+  state.currentQuestion = question;
+  renderPractice(material, question, usedSampleMode);
+}
+
+function renderPractice(material, q, isSample) {
+  const optLetters = ['A','B','C','D'];
+  const optionsHTML = q.options.map((opt, i) => `
+    <li role="listitem">
+      <label id="opt-label-${optLetters[i]}">
+        <input type="radio" name="practice-option" value="${optLetters[i]}"
+               aria-label="Option ${optLetters[i]}: ${escHtml(opt)}" />
+        <span><strong>${optLetters[i]}.</strong> ${escHtml(opt)}</span>
+      </label>
+    </li>
+  `).join('');
+
+  document.getElementById('practice-content').innerHTML = `
+    <p class="material-id-line">Material: <strong>${material.id}</strong> · ${material.title}</p>
+    ${isSample ? '<span class="sample-label">Sample practice question</span>' : ''}
+    <p class="practice-question">${escHtml(q.question)}</p>
+    <ul class="options-list" role="list">
+      ${optionsHTML}
+    </ul>
+    <button class="btn btn--answer" id="reveal-btn" type="button" disabled>
+      Reveal Answer
+    </button>
+    <div id="answer-reveal" aria-live="polite"></div>
+  `;
+
+  // Enable reveal button once an option is selected
+  document.querySelectorAll('input[name="practice-option"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      state.selectedOption = radio.value;
+      document.getElementById('reveal-btn').disabled = false;
+    });
+  });
+
+  document.getElementById('reveal-btn').addEventListener('click', () => {
+    revealAnswer(material, q);
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   COMPONENT 4 — Answer Reveal & Explanation
+   ══════════════════════════════════════════════════════════════ */
+function revealAnswer(material, q) {
+  if (state.answered) return;
+  state.answered = true;
+
+  const selected = state.selectedOption;
+  const isCorrect = selected === q.answer;
+  const optLetters = ['A','B','C','D'];
+
+  // Style all option labels
+  optLetters.forEach(letter => {
+    const label = document.getElementById(`opt-label-${letter}`);
+    if (!label) return;
+    if (letter === q.answer) {
+      label.classList.add('show-correct');
+    } else if (letter === selected && !isCorrect) {
+      label.classList.add('selected-wrong');
+    }
+    label.querySelector('input').disabled = true;
+  });
+
+  document.getElementById('reveal-btn').disabled = true;
+
+  const resultClass = isCorrect ? 'answer-result--correct' : 'answer-result--wrong';
+  const resultText  = isCorrect
+    ? '✓ Correct!'
+    : `✗ Not quite — the correct answer is ${q.answer}.`;
+
+  const revealDiv = document.getElementById('answer-reveal');
+  revealDiv.innerHTML = `
+    <div class="answer-result ${resultClass}" role="alert">${resultText}</div>
+    <p class="explanation-text">${escHtml(q.explanation)}</p>
+    <div class="source-excerpt">
+      <strong>Source — ${escHtml(material.id)}</strong>
+      ${escHtml(q.source_excerpt)}
+    </div>
+  `;
+  revealDiv.classList.add('visible');
+  revealDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   COMPONENT 5 — Human Help
+   ══════════════════════════════════════════════════════════════ */
+function renderHelp() {
+  const dir = document.getElementById('help-directory');
+  dir.innerHTML = HELP_DIRECTORY.map(h => `
+    <div class="help-card" role="listitem">
+      <div class="help-card__name">${escHtml(h.name)}</div>
+      <div class="help-card__role">${escHtml(h.role)}</div>
+      <a class="help-card__link" href="mailto:${escHtml(h.contact)}">${escHtml(h.contact)}</a>
+      ${h.phone ? `<div class="help-card__hours">${escHtml(h.phone)}</div>` : ''}
+      <div class="help-card__hours">${escHtml(h.hours)}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('help-toggle-btn').addEventListener('click', () => {
+    const isHidden = dir.classList.toggle('hidden');
+    document.getElementById('help-toggle-btn').setAttribute('aria-expanded', String(!isHidden));
+    document.getElementById('help-toggle-btn').textContent = isHidden
+      ? 'Show help directory ▾'
+      : 'Hide help directory ▴';
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SAMPLE MODE INDICATOR
+   ══════════════════════════════════════════════════════════════ */
+function activateSampleMode() {
+  if (state.isSampleMode) return;
+  state.isSampleMode = true;
+  document.getElementById('sample-mode-badge').classList.add('visible');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   HELPERS
+   ══════════════════════════════════════════════════════════════ */
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   BOOT
+   ══════════════════════════════════════════════════════════════ */
+(function boot() {
+  // Fill top bar with course info
+  document.getElementById('course-label').textContent =
+    `${COURSE.id} · ${COURSE.section}`;
+
+  initSelector();
+  renderHelp();
+})();
+</script>
+
+</body>
+</html>
