@@ -436,3 +436,91 @@ def test_find_proof_passage_finds_correct_passage():
 
     pid3 = _find_proof_passage("Dragons do not exist in any passage.", passages)
     assert pid3 is None, "Should return None when proof not found"
+
+
+# ── F2 TEST 16: fingerprint_check returns True for matching hash ──────────────
+
+
+def test_fingerprint_check_match():
+    """fingerprint_check must return True when body_text[:200] matches stored sha256."""
+    import hashlib
+
+    from lib.study import fingerprint_check
+
+    body = "Every business that makes or sells a product depends on a supply chain." * 3
+    expected = hashlib.sha256(body[:200].encode("utf-8")).hexdigest()
+    assert fingerprint_check(body, expected), "Should return True for matching fingerprint"
+
+
+def test_fingerprint_check_mismatch():
+    """fingerprint_check must return False when text has changed."""
+    import hashlib
+
+    from lib.study import fingerprint_check
+
+    body = "Every business that makes or sells a product depends on a supply chain." * 3
+    expected = hashlib.sha256(body[:200].encode("utf-8")).hexdigest()
+    tampered = "DIFFERENT CONTENT " + body
+    assert not fingerprint_check(tampered, expected), "Should return False for mismatched fingerprint"
+
+
+def test_fingerprint_check_uses_first_200_chars():
+    """fingerprint_check must hash only the first 200 characters of body_text."""
+    import hashlib
+
+    from lib.study import fingerprint_check
+
+    # Two texts that differ only after char 200 should produce the same fingerprint
+    base = "A" * 200
+    text_a = base + "EXTRA_A"
+    text_b = base + "EXTRA_B"
+    expected = hashlib.sha256(base.encode("utf-8")).hexdigest()
+    assert fingerprint_check(text_a, expected), "text_a first 200 chars match"
+    assert fingerprint_check(text_b, expected), "text_b first 200 chars also match"
+
+
+# ── F2 TEST 17: highlight_proof wraps proof sentence in <mark> ────────────────
+
+
+def test_highlight_proof_exact_match():
+    """highlight_proof must wrap the proof sentence in <mark> tags."""
+    from lib.study import highlight_proof
+
+    passage = "The quick brown fox jumps over the lazy dog. The cat sat on the mat."
+    proof = "The cat sat on the mat."
+    result = highlight_proof(passage, proof)
+    assert "<mark>The cat sat on the mat.</mark>" in result
+    # The rest of the passage must still be present
+    assert "The quick brown fox jumps over the lazy dog." in result
+
+
+def test_highlight_proof_case_insensitive():
+    """highlight_proof must find the sentence case-insensitively if exact match fails."""
+    from lib.study import highlight_proof
+
+    passage = "Supply-chain RISK is real. Companies must plan ahead."
+    proof = "supply-chain risk is real."
+    result = highlight_proof(passage, proof)
+    assert "<mark>" in result, "Should still highlight even with case difference"
+
+
+def test_highlight_proof_fallback_when_not_found():
+    """highlight_proof must not crash when proof_sentence is absent; returns passage + note."""
+    from lib.study import highlight_proof
+
+    passage = "The sky is blue and the grass is green."
+    proof = "Dragons do not exist in this passage at all."
+    result = highlight_proof(passage, proof)
+    # Must include original passage
+    assert "The sky is blue" in result
+    # Must not crash; content returned is non-empty
+    assert result
+
+
+def test_highlight_proof_empty_inputs():
+    """highlight_proof must handle empty inputs gracefully."""
+    from lib.study import highlight_proof
+
+    assert highlight_proof("", "proof") == ""
+    assert highlight_proof("some passage", "") == "some passage"
+    assert highlight_proof("", "") == ""

@@ -17,7 +17,14 @@ import streamlit as st
 
 from lib import config
 from lib.ai import ask
-from lib.study import make_questions, split_passages, strip_metadata, summarise
+from lib.study import (
+    fingerprint_check,
+    highlight_proof,
+    make_questions,
+    split_passages,
+    strip_metadata,
+    summarise,
+)
 from lib.ui import page
 
 # ── Page chrome ──────────────────────────────────────────────────────────────
@@ -50,6 +57,30 @@ st.markdown(
         padding: 0.6rem 1rem;
         font-size: 0.9rem;
         margin-bottom: 0.75rem;
+    }
+    .badge-assigned {
+        background: #1e3a2a;
+        color: #4ade80;
+        border: 1px solid #00843D;
+        border-radius: 12px;
+        padding: 0.15rem 0.6rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    .badge-own-notes {
+        background: #2a2a2a;
+        color: #9ca3af;
+        border: 1px solid #4b5563;
+        border-radius: 12px;
+        padding: 0.15rem 0.6rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    mark {
+        background-color: #fef08a;
+        color: #1a1a1a;
+        border-radius: 2px;
+        padding: 0 2px;
     }
     </style>
     """,
@@ -84,8 +115,15 @@ source_choice = st.selectbox(
 reading_text = ""       # raw file/pasted text (shown in source banner)
 body_text = ""          # text after strip_metadata (fed to AI)
 source_meta: dict[str, Any] = {}
+is_assigned = False     # True when a sample from the assigned list is loaded
 
 if source_choice == "Paste / upload my own":
+    # ── "Your own notes" badge ────────────────────────────────────────────────
+    st.markdown(
+        "<span class='badge-own-notes'>📋 Your own notes — not checked against an assigned reading</span>",
+        unsafe_allow_html=True,
+    )
+
     # Upload widget (txt + pdf)
     uploaded = st.file_uploader("Upload a .txt or .pdf file (optional)", type=["txt", "pdf"])
     if uploaded is not None:
@@ -110,25 +148,49 @@ if source_choice == "Paste / upload my own":
     )
     reading_text = pasted
     body_text = reading_text  # pasted text has no metadata header to strip
+
 else:
     # Find matching sample
     idx = source_options.index(source_choice)  # already 0-based into _samples
     source_meta = _samples[idx]
+    is_assigned = True
     sample_path = SAMPLES_DIR / source_meta["file"]
     if sample_path.exists():
         reading_text = sample_path.read_text(encoding="utf-8")
         # Fix #1: strip header/metadata before passing to AI
         body_text = strip_metadata(reading_text)
-    # Show source banner with metadata only (not in the AI input)
+
+    # ── Always-visible source banner ─────────────────────────────────────────
     st.markdown(
         f"<div class='source-banner'>"
-        f"📚 <b>{source_meta['course']}</b> &nbsp;·&nbsp; "
+        f"📚 Built only from your instructor's assigned reading &nbsp;·&nbsp; "
+        f"<b>{source_meta['course']}</b> &nbsp;·&nbsp; "
         f"Week {source_meta['week']} &nbsp;·&nbsp; "
         f"<em>{source_meta['title']}</em> &nbsp;·&nbsp; "
         f"Assigned by {source_meta.get('assigned_by', '')}"
         f"</div>",
         unsafe_allow_html=True,
     )
+
+    # ── "Instructor-assigned" badge ───────────────────────────────────────────
+    st.markdown(
+        "<span class='badge-assigned'>✅ Instructor-assigned</span>",
+        unsafe_allow_html=True,
+    )
+
+    # ── Fingerprint check ─────────────────────────────────────────────────────
+    expected_fp = source_meta.get("sha256", "")
+    if expected_fp and body_text:
+        fp_ok = fingerprint_check(body_text, expected_fp)
+        short_fp = expected_fp[:8] + "…"
+        if fp_ok:
+            st.caption(f"🔒 Matches the file your instructor assigned (fingerprint {short_fp})")
+        else:
+            st.warning(
+                "⚠️ This file's content does not match the fingerprint recorded when it was assigned. "
+                "The reading may have been modified. Contact your instructor to confirm."
+            )
+
     # Show reading in an expander so it doesn't dominate the screen
     with st.expander("Show full reading text"):
         st.text(reading_text)
@@ -209,8 +271,16 @@ if q_result:
     st.divider()
     st.markdown("### 3 · Practice questions")
 
+    # ── F2: Proof counter ─────────────────────────────────────────────────────
+    total_q = len(questions)
+    q_with_proof = sum(1 for q in questions if q.get("proof_text", "").strip())
     if q_dropped:
-        st.caption(f"ℹ️ {q_dropped} AI question(s) could not be verified and were removed.")
+        st.info(
+            f"✅ **{q_with_proof} of {total_q} questions checked against your reading** "
+            f"(+ {q_dropped} removed because they could not be verified)"
+        )
+    else:
+        st.info(f"✅ **{q_with_proof} of {total_q} questions checked against your reading**")
 
     passages = st.session_state.get("passages", {})
 
@@ -242,7 +312,7 @@ if q_result:
                 correct_opt = opts[q["correct_index"]] if opts else ""
                 st.error(f"Not quite. The correct answer is: **{correct_opt}**")
 
-            # Fix #3: show EXACT proof sentence (not the full passage), with correct passage id
+            # F2: show EXACT proof sentence always (not only on wrong answers)
             pid = q.get("passage_id", "")
             proof = q.get("proof_text", "")
             if proof:
@@ -253,11 +323,13 @@ if q_result:
                     f"</div>"
                 )
                 st.markdown(proof_html, unsafe_allow_html=True)
-                # Optionally show full passage in collapsed expander
+
+                # F2: "Show me in the reading" expander with highlighted proof sentence
                 full_passage = passages.get(pid, "")
                 if full_passage:
-                    with st.expander(f"See full passage {pid}"):
-                        st.markdown(full_passage)
+                    with st.expander("📖 Show me in the reading"):
+                        highlighted_html = highlight_proof(full_passage, proof)
+                        st.markdown(highlighted_html, unsafe_allow_html=True)
 
         st.markdown("---")
 

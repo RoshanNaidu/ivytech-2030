@@ -46,37 +46,61 @@ reachable right now, and to be able to draft a message without starting from a b
 
 ## 2 · Smallest Changes to the Existing Build
 
-### F2 — Make grounding visible (implement first)
+### F2 — Make grounding visible ✅ IMPLEMENTED
 
 **Why first:** Trust is load-bearing. Without visible grounding, users will not engage with F1 or F3 fixes.
 
 | Attribute | Detail |
 |-----------|--------|
-| **Files touched** | `app/Home.py`, `app/lib/config.py` (new `ASSIGNED_READINGS` list) |
+| **Files touched** | `app/Home.py`, `app/lib/study.py` (`fingerprint_check`, `highlight_proof`), `samples/samples_index.json` (sha256 field added) |
 | **Effort** | S |
 
-**Changes:**
+**What was actually built:**
 
-1. **Source banner** (already CSS-defined in Home.py as `.source-banner`; promote it to always-visible, not
-   just for sample readings). Banner format: `📚 Course · Week N · Title · Assigned by [name]`.
-2. **"Instructor-assigned" vs "Your own notes" badge** on the section header:
-   - Sample reading → green `✅ Instructor-assigned` badge.
-   - Pasted text → grey `📋 Your own notes` badge.
-3. **Fingerprint check** in [`app/Home.py`](../app/Home.py): when a sample is loaded, compute
-   `sha256(body_text[:200])` at page-load and compare it to the hash stored in `samples_index.json`;
-   show a one-line warning if the content has changed.
-4. **Proof-question counter** `"N of N questions checked against your reading"` displayed above the
-   question list, computed from `len(questions)` after the existing verification pass in
-   [`app/lib/study.py`](../app/lib/study.py).
-5. **Exact proof sentence per question** is already built in Part 2
-   (`proof_text` field surfaced via the `.proof-badge` CSS block). Keep it; ensure it renders on
-   every answered question, not only on wrong answers — a one-line condition change in `Home.py`.
+1. **Always-visible source banner** — promoted from conditional to always showing for any sample reading.
+   Format: `📚 Built only from your instructor's assigned reading · Course · Week N · Title · Assigned by [name]`.
+   Located in `app/Home.py` in the sample-reading branch.
+
+2. **"Instructor-assigned" vs "Your own notes" badge** — rendered immediately after the source picker:
+   - Sample reading → green `✅ Instructor-assigned` badge (`.badge-assigned` CSS class).
+   - Pasted/uploaded text → grey `📋 Your own notes — not checked against an assigned reading` badge
+     (`.badge-own-notes` CSS class).
+
+3. **Fingerprint check** — `fingerprint_check(body_text, expected_fp)` added to `app/lib/study.py`.
+   Computes `sha256(body_text[:200])` and compares to the hex-digest stored in `samples_index.json`.
+   - On match: `🔒 Matches the file your instructor assigned (fingerprint ab12…)` caption shown.
+   - On mismatch: `st.warning()` tells the student the file may have changed and to contact their instructor.
+   - Both sample files now carry a `"sha256"` field in `samples/samples_index.json`.
+
+4. **Proof-question counter** — `st.info("✅ N of N questions checked against your reading")` shown
+   above the question list. When questions were removed: `(+ N removed because they could not be verified)`.
+   Computed from `len(questions)` and `q_dropped` after the existing verification pass.
+
+5. **Proof sentence always visible** — the `.proof-badge` block ("`🔍 Found in your reading [Pn]`") now
+   renders on every answered question (correct or incorrect), not just wrong answers. Single-line condition
+   change in `Home.py` — the badge was already built in Part 2.
+
+6. **"Show me in the reading" expander** — new `📖 Show me in the reading` expander under every answered
+   question shows the full passage with the proof sentence highlighted in `<mark>` yellow. Uses new
+   `highlight_proof(passage, proof_sentence)` helper in `app/lib/study.py` which tries exact match,
+   falls back to case-insensitive match, and falls back to appending a note if the sentence is not found
+   verbatim (keeps offline mode safe).
+
+7. **New tests (8 added, 29 total passing):**
+   - `test_fingerprint_check_match` — sha256 round-trip passes.
+   - `test_fingerprint_check_mismatch` — tampered text fails.
+   - `test_fingerprint_check_uses_first_200_chars` — only first 200 chars are hashed.
+   - `test_highlight_proof_exact_match` — `<mark>` wraps exact sentence.
+   - `test_highlight_proof_case_insensitive` — case-insensitive fallback works.
+   - `test_highlight_proof_fallback_when_not_found` — no crash when proof absent.
+   - `test_highlight_proof_empty_inputs` — empty strings handled.
 
 **Demo: before → after**
 - **Before:** no attribution visible; pilot says "I can't tell if these questions are from my reading."
-- **After:** source banner always shows course/week/instructor; every question shows the exact sentence from
-  the assigned file; counter reads e.g. "5 of 5 questions checked against your reading"; badge reads
-  "✅ Instructor-assigned".
+- **After:** source banner always shows "Built only from your instructor's assigned reading · course/week/instructor";
+  fingerprint caption confirms file integrity; every answered question shows the exact sentence from the assigned
+  file; counter reads "5 of 5 questions checked against your reading"; badge reads "✅ Instructor-assigned";
+  "📖 Show me in the reading" expander shows full passage with proof sentence highlighted yellow.
 
 **Commit:** `P3: surface grounding — source banner, proof counter, instructor badge` → _(link after implementation)_
 
@@ -204,6 +228,6 @@ no restart.
 
 | Finding | Before (measurable) | After (measurable) | Commit |
 |---------|--------------------|--------------------|--------|
-| F2 — Grounding | Pilot: "I can't tell if these are from my reading" (0 visible proof cues) | Source banner + instructor badge + "5 of 5 checked" counter + proof sentence always visible | _(link)_ |
+| F2 — Grounding | Pilot: "I can't tell if these are from my reading" (0 visible proof cues) | Source banner + instructor badge + fingerprint match caption + "5 of 5 checked" counter + proof sentence always visible + "📖 Show me in the reading" expander with yellow highlight | `P3: surface grounding — source banner, proof counter, instructor badge` |
 | F1 — Reading level | Flesch-Kincaid grade of bam101_week3.txt summary: _(fill after build)_ | Grade after "Simple" toggle: _(fill after build)_; Spanish output verified on screen | _(link)_ |
 | F3 — Get help | Placeholder info box; no auto-trigger; no resource hours | Panel auto-opens at <60 % accuracy; 🟢/🔴 open-now status; `mailto:` draft in one tap | _(link)_ |

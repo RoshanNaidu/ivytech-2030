@@ -10,6 +10,8 @@ make_questions(passages, ask_fn) -> dict
 offline_summary(passages)  -> list[dict]
 offline_questions(passages)-> list[dict]
 study(text, ask_fn)        -> dict  (all-in-one, cached by text hash)
+fingerprint_check(body_text, expected_fp) -> bool   sha256(body_text[:200]) == expected_fp
+highlight_proof(passage, proof_sentence) -> str     passage with proof_sentence wrapped in <mark>
 """
 
 from __future__ import annotations
@@ -520,6 +522,60 @@ def study(text: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# F2: Fingerprint check and proof-sentence highlight helper
+# ---------------------------------------------------------------------------
+
+
+def fingerprint_check(body_text: str, expected_fp: str) -> bool:
+    """Return True if sha256(body_text[:200]) matches expected_fp.
+
+    Args:
+        body_text: The stripped body text of the loaded sample (after strip_metadata).
+        expected_fp: The hex-digest string stored in samples_index.json.
+
+    This lets the UI warn if the file on disk has been modified since the
+    fingerprint was recorded.
+    """
+    actual = hashlib.sha256(body_text[:200].encode("utf-8")).hexdigest()
+    return actual == expected_fp
+
+
+def highlight_proof(passage: str, proof_sentence: str) -> str:
+    """Return passage HTML with proof_sentence wrapped in <mark> for highlighting.
+
+    If proof_sentence is not found (exact or case-insensitive), returns the
+    passage with proof_sentence appended as a fallback so the UI always has
+    something to show.
+
+    Args:
+        passage: The full passage text.
+        proof_sentence: The exact sentence to highlight.
+
+    Returns:
+        HTML string safe for st.markdown(..., unsafe_allow_html=True).
+    """
+    if not proof_sentence or not passage:
+        return passage or ""
+
+    # Try exact match first
+    if proof_sentence in passage:
+        highlighted = passage.replace(proof_sentence, f"<mark>{proof_sentence}</mark>", 1)
+        return highlighted
+
+    # Try case-insensitive
+    lower_passage = passage.lower()
+    lower_proof = proof_sentence.lower()
+    idx = lower_passage.find(lower_proof)
+    if idx != -1:
+        end = idx + len(proof_sentence)
+        highlighted = passage[:idx] + f"<mark>{passage[idx:end]}</mark>" + passage[end:]
+        return highlighted
+
+    # Proof not found verbatim — return passage with proof appended
+    return passage + f"\n\n*(Proof sentence: {proof_sentence})*"
+
+
+# ---------------------------------------------------------------------------
 # Convenience re-export for quick description
 # ---------------------------------------------------------------------------
 
@@ -531,5 +587,7 @@ __all__ = [
     "offline_summary",
     "offline_questions",
     "study",
+    "fingerprint_check",
+    "highlight_proof",
     "textwrap",  # re-exported for tests
 ]

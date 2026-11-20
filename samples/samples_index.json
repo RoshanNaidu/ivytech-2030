@@ -4,13 +4,15 @@
     "week": 3,
     "title": "Supply-Chain Risk Management",
     "assigned_by": "Prof. Sandra Morales",
-    "file": "bam101_week3.txt"
+    "file": "bam101_week3.txt",
+    "sha256": "39416abe88537f4f33e03cc0811dfec59fd61bb9a563a1158fce9c3532f8ad6f"
   },
   {
     "course": "CIT 110 — IT Foundations",
     "week": 1,
     "title": "Introduction to Computer Networking",
     "assigned_by": "Prof. David Chen",
-    "file": "cit110_week1.txt"
+    "file": "cit110_week1.txt",
+    "sha256": "3a17a5ba72a5ebeca4c880eaea893d275d45c7d94d8072553d208a48b18ee0cd"
   }
 ]
