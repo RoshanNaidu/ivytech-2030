@@ -7,25 +7,23 @@
   <style>
     /* ══════════════════════════════════════════════════════════
        DESIGN TOKENS
-       Warm off-white bg, deep evergreen primary, soft lavender accent
        ══════════════════════════════════════════════════════════ */
     :root {
-      /* Palette */
-      --bg:          #faf8f5;      /* warm off-white */
+      --bg:          #faf8f5;
       --surface:     #ffffff;
-      --surface-alt: #f4f1ee;      /* slightly warmer card bg */
+      --surface-alt: #f4f1ee;
       --border:      #e0dbd4;
-      --green:       #1a4d35;      /* deep evergreen */
+      --green:       #1a4d35;
       --green-mid:   #2d6a4a;
-      --green-lt:    #e8f4ee;      /* tint for hover/selected */
-      --lavender:    #7c6fcd;      /* soft lavender accent (selected state) */
-      --lavender-lt: #ede9f9;      /* lavender tint */
+      --green-lt:    #e8f4ee;
+      --lavender:    #7c6fcd;
+      --lavender-lt: #ede9f9;
       --text:        #22201d;
       --text-mid:    #4a4740;
       --muted:       #7a7268;
-      --gold:        #c9820a;      /* sample-mode amber */
+      --gold:        #c9820a;
       --gold-lt:     #fef3dc;
-      --focus:       #2563eb;      /* keyboard focus ring */
+      --focus:       #2563eb;
       --correct-bg:  #e8f5eb;
       --correct-fg:  #1a4d35;
       --correct-border: #5aad70;
@@ -34,10 +32,7 @@
       --wrong-border:#d87070;
       --radius-sm:   8px;
       --radius:      14px;
-      --radius-lg:   20px;
     }
-
-    /* ── Reset ───────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { font-size: 16px; }
     body {
@@ -47,15 +42,11 @@
       line-height: 1.65;
       min-height: 100dvh;
     }
-
-    /* ── Focus ring (keyboard nav) ───────────────────────────── */
     :focus-visible {
       outline: 3px solid var(--focus);
       outline-offset: 3px;
       border-radius: 4px;
     }
-
-    /* ── Skip-to-content (a11y) ──────────────────────────────── */
     .skip-link {
       position: absolute; top: -100px; left: 0;
       background: var(--focus); color: #fff;
@@ -64,574 +55,321 @@
       text-decoration: none;
     }
     .skip-link:focus { top: 0; }
+    .app-shell { max-width: 480px; margin: 0 auto; padding-bottom: 5rem; }
 
-    /* ── App shell ───────────────────────────────────────────── */
-    .app-shell {
-      max-width: 480px;        /* comfortable phone width */
-      margin: 0 auto;
-      padding-bottom: 5rem;
-    }
-
-    /* ══════════════════════════════════════════════════════════
-       HEADER
-       ══════════════════════════════════════════════════════════ */
+    /* ══ HEADER ════════════════════════════════════════════════ */
     .header {
-      background: var(--green);
-      color: #fff;
+      background: var(--green); color: #fff;
       padding: .9rem 1rem .8rem;
       position: sticky; top: 0; z-index: 10;
     }
     .header__row1 {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: .5rem;
+      display: flex; align-items: center;
+      justify-content: space-between; gap: .5rem;
     }
-    .header__brand {
-      display: flex;
-      flex-direction: column;
-      gap: .05rem;
-    }
-    .header__app-name {
-      font-size: 1.1rem;
-      font-weight: 800;
-      letter-spacing: -.01em;
-      line-height: 1.1;
-    }
-    .header__course {
-      font-size: .78rem;
-      opacity: .82;
-      letter-spacing: .01em;
-    }
-    .header__right {
-      display: flex;
-      align-items: center;
-      gap: .5rem;
-      flex-shrink: 0;
-    }
-    /* "Get help" button in header */
+    .header__brand { display: flex; flex-direction: column; gap: .05rem; }
+    .header__app-name { font-size: 1.1rem; font-weight: 800; letter-spacing: -.01em; line-height: 1.1; }
+    .header__course  { font-size: .78rem; opacity: .82; letter-spacing: .01em; }
+    .header__right   { display: flex; align-items: center; gap: .5rem; flex-shrink: 0; }
     .btn-help {
       background: rgba(255,255,255,.18);
       border: 1.5px solid rgba(255,255,255,.55);
-      color: #fff;
-      font-size: .78rem;
-      font-weight: 700;
-      padding: .35rem .75rem;
-      border-radius: 999px;
-      cursor: pointer;
-      white-space: nowrap;
-      min-height: 36px;
-      min-width: 72px;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+      color: #fff; font-size: .78rem; font-weight: 700;
+      padding: .35rem .75rem; border-radius: 999px; cursor: pointer;
+      white-space: nowrap; min-height: 36px; min-width: 72px;
+      display: inline-flex; align-items: center; justify-content: center;
       transition: background .15s;
     }
     .btn-help:hover { background: rgba(255,255,255,.3); }
     .btn-help:focus-visible { outline-color: #fff; }
-    /* Sample mode badge */
     .sample-badge {
-      background: var(--gold);
-      color: #000;
-      font-size: .66rem;
-      font-weight: 800;
-      padding: .15rem .5rem;
-      border-radius: 999px;
-      white-space: nowrap;
-      display: none;
-      letter-spacing: .03em;
+      background: var(--gold); color: #000;
+      font-size: .66rem; font-weight: 800;
+      padding: .15rem .5rem; border-radius: 999px;
+      white-space: nowrap; display: none; letter-spacing: .03em;
     }
     .sample-badge.visible { display: inline-block; }
 
-    /* ══════════════════════════════════════════════════════════
-       MATERIAL PICKER SECTION
-       ══════════════════════════════════════════════════════════ */
-    .picker-section {
-      padding: 1.1rem 1rem .9rem;
-    }
+    /* ══ MATERIAL PICKER ═══════════════════════════════════════ */
+    .picker-section { padding: 1.1rem 1rem .9rem; }
     .picker-label {
-      font-size: .72rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      color: var(--muted);
-      margin-bottom: .55rem;
-      display: block;
+      font-size: .72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .08em; color: var(--muted);
+      margin-bottom: .55rem; display: block;
     }
-
-    /* Material cards (radio-button cards) */
-    .material-list {
-      display: flex;
-      flex-direction: column;
-      gap: .55rem;
-    }
-    .material-card {
-      position: relative;
-    }
-    .material-card input[type="radio"] {
-      position: absolute;
-      opacity: 0;
-      width: 0; height: 0;
-    }
+    .material-list { display: flex; flex-direction: column; gap: .55rem; }
+    .material-card { position: relative; }
+    .material-card input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
     .material-card__label {
-      display: flex;
-      flex-direction: column;
-      gap: .15rem;
-      padding: .75rem .9rem;
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--surface);
-      cursor: pointer;
+      display: flex; flex-direction: column; gap: .15rem;
+      padding: .75rem .9rem; border: 1.5px solid var(--border);
+      border-radius: var(--radius); background: var(--surface);
+      cursor: pointer; min-height: 52px;
       transition: border-color .12s, background .12s, box-shadow .12s;
-      min-height: 52px;
     }
-    .material-card__label:hover {
-      border-color: var(--green-mid);
-      background: var(--green-lt);
-    }
-    /* Selected state uses lavender */
+    .material-card__label:hover { border-color: var(--green-mid); background: var(--green-lt); }
     .material-card input[type="radio"]:checked + .material-card__label {
-      border-color: var(--lavender);
-      background: var(--lavender-lt);
+      border-color: var(--lavender); background: var(--lavender-lt);
       box-shadow: 0 0 0 1px var(--lavender);
     }
     .material-card input[type="radio"]:focus-visible + .material-card__label {
-      outline: 3px solid var(--focus);
-      outline-offset: 2px;
+      outline: 3px solid var(--focus); outline-offset: 2px;
     }
-    .material-card__meta {
-      display: flex;
-      gap: .4rem;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-    .material-card__title {
-      font-size: .95rem;
-      font-weight: 600;
-      color: var(--text);
-      line-height: 1.3;
-    }
-    /* Pill badges */
+    .material-card__meta { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+    .material-card__title { font-size: .95rem; font-weight: 600; color: var(--text); line-height: 1.3; }
     .pill {
-      font-size: .66rem;
-      font-weight: 700;
-      padding: .12rem .45rem;
-      border-radius: 999px;
-      border: 1px solid;
-      white-space: nowrap;
-      letter-spacing: .02em;
+      font-size: .66rem; font-weight: 700; padding: .12rem .45rem;
+      border-radius: 999px; border: 1px solid; white-space: nowrap; letter-spacing: .02em;
     }
-    .pill--reading   { color: #0c5a8a; border-color: #b3d9f2; background: #e6f2fb; }
-    .pill--lecture   { color: #4a2080; border-color: #cfc0f0; background: #ede9f9; }
-    .pill--week      { color: var(--muted); border-color: var(--border); background: var(--surface-alt); }
-
-    /* CTA button below picker */
+    .pill--reading { color: #0c5a8a; border-color: #b3d9f2; background: #e6f2fb; }
+    .pill--lecture { color: #4a2080; border-color: #cfc0f0; background: #ede9f9; }
+    .pill--week    { color: var(--muted); border-color: var(--border); background: var(--surface-alt); }
     .btn-study {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      margin-top: .9rem;
-      padding: .8rem 1rem;
-      background: var(--green);
-      color: #fff;
-      font-size: 1rem;
-      font-weight: 700;
-      border: none;
-      border-radius: var(--radius);
-      cursor: pointer;
-      min-height: 48px;
-      transition: background .15s;
-      letter-spacing: .01em;
+      display: flex; align-items: center; justify-content: center;
+      width: 100%; margin-top: .9rem; padding: .8rem 1rem;
+      background: var(--green); color: #fff;
+      font-size: 1rem; font-weight: 700; border: none;
+      border-radius: var(--radius); cursor: pointer; min-height: 48px;
+      transition: background .15s; letter-spacing: .01em;
     }
     .btn-study:hover { background: var(--green-mid); }
     .btn-study:disabled { opacity: .4; cursor: default; }
 
-    /* ══════════════════════════════════════════════════════════
-       STUDY AREA (tabs + panels)
-       ══════════════════════════════════════════════════════════ */
-    .study-area {
-      padding: 0 1rem;
-    }
+    /* ══ STUDY AREA ════════════════════════════════════════════ */
+    .study-area { padding: 0 1rem; }
     .study-area.hidden { display: none; }
-
-    /* Material title strip above tabs */
     .study-title-bar {
-      display: flex;
-      align-items: flex-start;
-      gap: .6rem;
-      padding: .85rem 0 .6rem;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: .1rem;
+      display: flex; align-items: flex-start; gap: .6rem;
+      padding: .85rem 0 .6rem; border-bottom: 1px solid var(--border); margin-bottom: .1rem;
     }
     .study-title-bar__id {
-      font-size: .68rem;
-      font-weight: 800;
-      color: var(--green-mid);
-      background: var(--green-lt);
-      border: 1px solid #b6dcca;
-      border-radius: 6px;
-      padding: .15rem .45rem;
-      flex-shrink: 0;
-      margin-top: .15rem;
+      font-size: .68rem; font-weight: 800; color: var(--green-mid);
+      background: var(--green-lt); border: 1px solid #b6dcca;
+      border-radius: 6px; padding: .15rem .45rem; flex-shrink: 0; margin-top: .15rem;
     }
-    .study-title-bar__title {
-      font-size: .9rem;
-      font-weight: 700;
-      color: var(--text);
-      line-height: 1.3;
-    }
+    .study-title-bar__title { font-size: .9rem; font-weight: 700; color: var(--text); line-height: 1.3; }
 
-    /* Tab bar */
+    /* ── Tab bar ─────────────────────────────────────────────── */
     .tab-bar {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 0;
-      border-bottom: 2px solid var(--border);
-      margin-bottom: 1rem;
+      display: grid; grid-template-columns: 1fr 1fr 1fr;
+      border-bottom: 2px solid var(--border); margin-bottom: 1rem;
     }
     .tab-btn {
-      background: none;
-      border: none;
-      border-bottom: 3px solid transparent;
-      margin-bottom: -2px;
-      padding: .6rem .4rem .55rem;
-      font-size: .82rem;
-      font-weight: 600;
-      color: var(--muted);
-      cursor: pointer;
-      text-align: center;
-      transition: color .12s, border-color .12s;
-      white-space: nowrap;
-      min-height: 44px;
+      background: none; border: none;
+      border-bottom: 3px solid transparent; margin-bottom: -2px;
+      padding: .6rem .4rem .55rem; font-size: .82rem; font-weight: 600;
+      color: var(--muted); cursor: pointer; text-align: center;
+      transition: color .12s, border-color .12s; white-space: nowrap; min-height: 44px;
     }
     .tab-btn:hover { color: var(--green); }
-    .tab-btn[aria-selected="true"] {
-      color: var(--green);
-      border-bottom-color: var(--green);
-    }
-    .tab-btn:focus-visible {
-      outline: 3px solid var(--focus);
-      outline-offset: -2px;
-      border-radius: 4px 4px 0 0;
-    }
-
-    /* Tab panels */
+    .tab-btn[aria-selected="true"] { color: var(--green); border-bottom-color: var(--green); }
+    .tab-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: -2px; border-radius: 4px 4px 0 0; }
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
-    /* ══════════════════════════════════════════════════════════
-       QUICK REVIEW PANEL
-       ══════════════════════════════════════════════════════════ */
+    /* ── RB1: Reading-level / language toggle ─────────────────── */
+    .level-toggle {
+      display: flex; gap: .4rem; margin-bottom: .9rem;
+      border: 1px solid var(--border); border-radius: 999px;
+      background: var(--surface-alt); padding: .2rem;
+      width: fit-content;
+    }
+    .level-btn {
+      background: none; border: none; border-radius: 999px;
+      font-size: .78rem; font-weight: 600; color: var(--muted);
+      padding: .3rem .75rem; cursor: pointer; min-height: 32px;
+      transition: background .12s, color .12s;
+    }
+    .level-btn[aria-pressed="true"] {
+      background: var(--green); color: #fff;
+    }
+    .level-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+    /* ── Quick review ─────────────────────────────────────────── */
     .review-bullets {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: .5rem;
-      margin: 0 0 .9rem;
+      list-style: none; display: flex; flex-direction: column;
+      gap: .5rem; margin: 0 0 .9rem;
     }
     .review-bullets li {
-      display: flex;
-      gap: .6rem;
-      align-items: flex-start;
-      font-size: .95rem;
-      line-height: 1.5;
+      display: flex; gap: .6rem; align-items: flex-start;
+      font-size: .95rem; line-height: 1.5;
     }
     .review-bullets li::before {
-      content: "▸";
-      color: var(--green-mid);
-      flex-shrink: 0;
-      margin-top: .05rem;
-      font-size: .85rem;
+      content: "▸"; color: var(--green-mid); flex-shrink: 0;
+      margin-top: .05rem; font-size: .85rem;
     }
-    /* Course term emphasis inside bullets */
-    .term-em {
-      font-weight: 700;
-      color: var(--green);
-    }
+    .term-em { font-weight: 700; color: var(--green); }
 
-    /* ══════════════════════════════════════════════════════════
-       KEY TERMS PANEL
-       ══════════════════════════════════════════════════════════ */
-    .terms-list {
-      display: flex;
-      flex-direction: column;
-      gap: .6rem;
-    }
+    /* ── Key terms ────────────────────────────────────────────── */
+    .terms-list { display: flex; flex-direction: column; gap: .6rem; }
     .term-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: .7rem .85rem;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: .7rem .85rem;
     }
-    .term-card__term {
-      font-weight: 700;
-      font-size: .95rem;
-      color: var(--green);
-      margin-bottom: .2rem;
-    }
-    .term-card__def {
-      font-size: .88rem;
-      color: var(--text-mid);
-      line-height: 1.55;
-    }
+    .term-card__term { font-weight: 700; font-size: .95rem; color: var(--green); margin-bottom: .2rem; }
+    .term-card__def  { font-size: .88rem; color: var(--text-mid); line-height: 1.55; }
 
-    /* ══════════════════════════════════════════════════════════
-       PRACTICE PANEL
-       ══════════════════════════════════════════════════════════ */
+    /* ── Practice ─────────────────────────────────────────────── */
     .practice-q {
-      font-size: .97rem;
-      font-weight: 600;
-      line-height: 1.45;
-      margin-bottom: .85rem;
-      color: var(--text);
+      font-size: .97rem; font-weight: 600; line-height: 1.45;
+      margin-bottom: .85rem; color: var(--text);
     }
     .options-list {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: .5rem;
-      margin-bottom: .85rem;
+      list-style: none; display: flex; flex-direction: column;
+      gap: .5rem; margin-bottom: .85rem;
     }
     .options-list li { position: relative; }
-    .options-list input[type="radio"] {
-      position: absolute;
-      opacity: 0; width: 0; height: 0;
-    }
+    .options-list input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
     .option-label {
-      display: flex;
-      align-items: flex-start;
-      gap: .65rem;
-      padding: .7rem .85rem;
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      font-size: .93rem;
-      line-height: 1.4;
-      background: var(--surface);
-      transition: border-color .1s, background .1s;
-      min-height: 48px;
+      display: flex; align-items: flex-start; gap: .65rem;
+      padding: .7rem .85rem; border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm); cursor: pointer;
+      font-size: .93rem; line-height: 1.4; background: var(--surface);
+      transition: border-color .1s, background .1s; min-height: 48px;
     }
     .option-label:hover { border-color: var(--green-mid); background: var(--green-lt); }
     .options-list input[type="radio"]:checked + .option-label {
-      border-color: var(--lavender);
-      background: var(--lavender-lt);
+      border-color: var(--lavender); background: var(--lavender-lt);
       box-shadow: 0 0 0 1px var(--lavender);
     }
     .options-list input[type="radio"]:focus-visible + .option-label {
-      outline: 3px solid var(--focus);
-      outline-offset: 2px;
+      outline: 3px solid var(--focus); outline-offset: 2px;
     }
-    /* Letter chip */
     .opt-letter {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 1.5rem;
-      height: 1.5rem;
-      border-radius: 50%;
-      border: 1.5px solid var(--border);
-      font-size: .75rem;
-      font-weight: 800;
-      flex-shrink: 0;
-      color: var(--muted);
-      background: var(--surface-alt);
-      margin-top: .05rem;
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 1.5rem; height: 1.5rem; border-radius: 50%;
+      border: 1.5px solid var(--border); font-size: .75rem; font-weight: 800;
+      flex-shrink: 0; color: var(--muted); background: var(--surface-alt); margin-top: .05rem;
     }
     .options-list input[type="radio"]:checked + .option-label .opt-letter {
-      border-color: var(--lavender);
-      color: var(--lavender);
-      background: #fff;
+      border-color: var(--lavender); color: var(--lavender); background: #fff;
     }
-
-    /* Post-submit feedback states */
-    .option-label.state-correct {
-      border-color: var(--correct-border) !important;
-      background: var(--correct-bg) !important;
-      box-shadow: none !important;
-    }
-    .option-label.state-correct .opt-letter {
-      border-color: var(--correct-border);
-      color: var(--correct-fg);
-      background: #fff;
-    }
-    .option-label.state-wrong {
-      border-color: var(--wrong-border) !important;
-      background: var(--wrong-bg) !important;
-      box-shadow: none !important;
-    }
-    .option-label.state-wrong .opt-letter {
-      border-color: var(--wrong-border);
-      color: var(--wrong-fg);
-      background: #fff;
-    }
-    /* Icon symbol next to letter for color-independent feedback */
-    .opt-icon {
-      display: none;
-      font-size: .85rem;
-      margin-left: .15rem;
-    }
+    .option-label.state-correct { border-color: var(--correct-border) !important; background: var(--correct-bg) !important; box-shadow: none !important; }
+    .option-label.state-correct .opt-letter { border-color: var(--correct-border); color: var(--correct-fg); background: #fff; }
+    .option-label.state-wrong   { border-color: var(--wrong-border) !important;   background: var(--wrong-bg) !important;   box-shadow: none !important; }
+    .option-label.state-wrong   .opt-letter { border-color: var(--wrong-border);   color: var(--wrong-fg);   background: #fff; }
+    .opt-icon { display: none; font-size: .85rem; margin-left: .15rem; }
     .state-correct .opt-icon { display: inline; }
     .state-wrong   .opt-icon { display: inline; }
 
-    /* Submit button */
     .btn-submit {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      padding: .75rem 1rem;
-      background: var(--green);
-      color: #fff;
-      font-size: .97rem;
-      font-weight: 700;
-      border: none;
-      border-radius: var(--radius);
-      cursor: pointer;
-      min-height: 48px;
+      display: flex; align-items: center; justify-content: center;
+      width: 100%; padding: .75rem 1rem; background: var(--green); color: #fff;
+      font-size: .97rem; font-weight: 700; border: none;
+      border-radius: var(--radius); cursor: pointer; min-height: 48px;
       transition: background .15s;
     }
     .btn-submit:hover { background: var(--green-mid); }
     .btn-submit:disabled { opacity: .38; cursor: default; }
 
-    /* Answer feedback block */
-    .answer-feedback {
-      display: none;
-      margin-top: .9rem;
-      border-radius: var(--radius-sm);
-      overflow: hidden;
-    }
+    /* ── Answer feedback ──────────────────────────────────────── */
+    .answer-feedback { display: none; margin-top: .9rem; border-radius: var(--radius-sm); overflow: hidden; }
     .answer-feedback.visible { display: block; }
     .feedback-banner {
-      display: flex;
-      align-items: center;
-      gap: .5rem;
-      padding: .6rem .85rem;
-      font-size: .9rem;
-      font-weight: 700;
+      display: flex; align-items: center; gap: .5rem;
+      padding: .6rem .85rem; font-size: .9rem; font-weight: 700;
     }
     .feedback-banner.correct { background: var(--correct-bg); color: var(--correct-fg); border: 1px solid var(--correct-border); border-radius: var(--radius-sm) var(--radius-sm) 0 0; }
     .feedback-banner.wrong   { background: var(--wrong-bg);   color: var(--wrong-fg);   border: 1px solid var(--wrong-border);  border-radius: var(--radius-sm) var(--radius-sm) 0 0; }
     .feedback-body {
-      padding: .7rem .85rem;
-      border: 1px solid var(--border);
-      border-top: none;
-      border-radius: 0 0 var(--radius-sm) var(--radius-sm);
-      background: var(--surface);
+      padding: .7rem .85rem; border: 1px solid var(--border); border-top: none;
+      border-radius: 0 0 var(--radius-sm) var(--radius-sm); background: var(--surface);
     }
-    .feedback-explanation {
-      font-size: .9rem;
-      line-height: 1.6;
-      color: var(--text-mid);
-      margin-bottom: .6rem;
-    }
-    .source-quote {
-      border-left: 3px solid var(--green-mid);
-      padding: .4rem .65rem;
-      background: var(--green-lt);
-      border-radius: 0 6px 6px 0;
-      font-size: .8rem;
-      color: var(--muted);
-    }
-    .source-quote__label {
-      font-size: .66rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: .07em;
-      color: var(--green-mid);
-      display: block;
-      margin-bottom: .15rem;
-    }
+    .feedback-explanation { font-size: .9rem; line-height: 1.6; color: var(--text-mid); margin-bottom: .6rem; }
 
-    /* ══════════════════════════════════════════════════════════
-       SHARED SECTION FOOTER (sample content notice)
-       ══════════════════════════════════════════════════════════ */
+    /* ── RB2: View source disclosure ──────────────────────────── */
+    .source-disclosure { margin-top: .65rem; }
+    .source-disclosure summary {
+      display: flex; align-items: center; gap: .4rem;
+      font-size: .78rem; font-weight: 700; color: var(--green-mid);
+      cursor: pointer; list-style: none; padding: .3rem 0;
+      text-decoration: underline; text-underline-offset: 2px;
+    }
+    .source-disclosure summary::-webkit-details-marker { display: none; }
+    .source-disclosure summary::before { content: "▸"; font-size: .7rem; transition: transform .15s; }
+    .source-disclosure[open] summary::before { transform: rotate(90deg); }
+    .source-disclosure:focus-within summary { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+    .source-disclosure__body {
+      border-left: 3px solid var(--green-mid); padding: .5rem .75rem;
+      background: var(--green-lt); border-radius: 0 6px 6px 0;
+      margin-top: .35rem;
+    }
+    .source-disclosure__meta {
+      display: flex; gap: .5rem; flex-wrap: wrap;
+      margin-bottom: .35rem;
+    }
+    .source-meta-pill {
+      font-size: .66rem; font-weight: 700; padding: .1rem .4rem;
+      border-radius: 999px; border: 1px solid;
+    }
+    .source-meta-pill--assigned { color: #065f46; border-color: #a7f3d0; background: #d1fae5; }
+    .source-meta-pill--mid      { color: var(--green-mid); border-color: #b6dcca; background: #fff; }
+    .source-excerpt-text { font-size: .82rem; color: var(--muted); line-height: 1.55; }
+    .source-label { font-size: .66rem; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; color: var(--green-mid); display: block; margin-bottom: .15rem; }
+
+    /* ── Shared sample notice ─────────────────────────────────── */
     .sample-notice {
-      display: none;
-      align-items: center;
-      gap: .4rem;
-      margin-top: .9rem;
-      padding: .5rem .7rem;
-      background: var(--gold-lt);
-      border: 1px solid #f5d78e;
-      border-radius: var(--radius-sm);
-      font-size: .78rem;
-      color: #7a5500;
+      display: none; align-items: center; gap: .4rem; margin-top: .9rem;
+      padding: .5rem .7rem; background: var(--gold-lt);
+      border: 1px solid #f5d78e; border-radius: var(--radius-sm);
+      font-size: .78rem; color: #7a5500;
     }
     .sample-notice.visible { display: flex; }
     .sample-notice__icon { font-size: .9rem; flex-shrink: 0; }
 
-    /* ══════════════════════════════════════════════════════════
-       HELP PANEL (bottom of page)
-       ══════════════════════════════════════════════════════════ */
+    /* ══ RB3: HELP PANEL ═══════════════════════════════════════ */
     .help-section {
-      padding: 1rem 1rem 0;
-      border-top: 1px solid var(--border);
-      margin-top: 1.5rem;
+      padding: 1rem 1rem 0; border-top: 1px solid var(--border); margin-top: 1.5rem;
     }
     .help-section__header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: .4rem;
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: .4rem;
     }
-    .help-section__title {
-      font-size: .78rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .07em;
-      color: var(--muted);
-    }
+    .help-section__title { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
     .btn-toggle {
-      background: none; border: none;
-      font-size: .82rem; font-weight: 600;
+      background: none; border: none; font-size: .82rem; font-weight: 600;
       color: var(--green); cursor: pointer;
-      text-decoration: underline;
-      text-underline-offset: 2px;
-      padding: 0;
+      text-decoration: underline; text-underline-offset: 2px; padding: 0;
     }
-    .help-cards {
-      display: flex;
-      flex-direction: column;
-      gap: .55rem;
-      margin-top: .6rem;
-    }
+    .help-cards { display: flex; flex-direction: column; gap: .7rem; margin-top: .6rem; }
     .help-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: .7rem .85rem;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: .75rem .9rem;
     }
-    .help-card__name  { font-weight: 700; font-size: .9rem; }
-    .help-card__role  { font-size: .78rem; color: var(--muted); margin-bottom: .25rem; }
-    .help-card__link  { font-size: .82rem; color: var(--green); text-decoration: none; }
+    .help-card--featured { border-color: var(--green-mid); border-width: 2px; }
+    .help-card__badge {
+      display: inline-block; font-size: .62rem; font-weight: 800;
+      text-transform: uppercase; letter-spacing: .05em;
+      padding: .1rem .4rem; border-radius: 999px; margin-bottom: .4rem;
+    }
+    .help-card__badge--24h  { background: #e8f4ee; color: var(--green-mid); border: 1px solid #b6dcca; }
+    .help-card__badge--sample { background: var(--gold-lt); color: #7a5500; border: 1px solid #f5d78e; }
+    .help-card__name  { font-weight: 700; font-size: .92rem; margin-bottom: .1rem; }
+    .help-card__best  { font-size: .82rem; color: var(--text-mid); margin-bottom: .3rem; line-height: 1.4; }
+    .help-card__avail { font-size: .76rem; color: var(--muted); margin-bottom: .35rem; }
+    .help-card__action { margin-top: .3rem; }
+    .help-card__link  { font-size: .84rem; color: var(--green); text-decoration: none; }
     .help-card__link:hover { text-decoration: underline; }
-    .help-card__hours { font-size: .75rem; color: var(--muted); margin-top: .12rem; }
+    .help-card__directions {
+      font-size: .82rem; color: var(--text-mid); line-height: 1.5;
+      border-left: 3px solid var(--green-mid); padding: .3rem .6rem;
+      background: var(--green-lt); border-radius: 0 4px 4px 0; margin-top: .2rem;
+    }
 
-    /* ══════════════════════════════════════════════════════════
-       SPINNER
-       ══════════════════════════════════════════════════════════ */
+    /* ══ SPINNER ════════════════════════════════════════════════ */
     .spinner {
-      display: inline-block;
-      width: 1rem; height: 1rem;
-      border: 2px solid #c5dece;
-      border-top-color: var(--green);
-      border-radius: 50%;
-      animation: spin .6s linear infinite;
-      vertical-align: middle;
-      margin-right: .4rem;
+      display: inline-block; width: 1rem; height: 1rem;
+      border: 2px solid #c5dece; border-top-color: var(--green);
+      border-radius: 50%; animation: spin .6s linear infinite;
+      vertical-align: middle; margin-right: .4rem;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
     .hidden { display: none !important; }
 
-    /* ══════════════════════════════════════════════════════════
-       RESPONSIVE — tighten at very narrow widths
-       ══════════════════════════════════════════════════════════ */
     @media (max-width: 360px) {
-      .tab-btn      { font-size: .75rem; padding: .55rem .3rem; }
+      .tab-btn { font-size: .75rem; padding: .55rem .3rem; }
       .header__app-name { font-size: 1rem; }
+      .level-btn { font-size: .72rem; padding: .28rem .6rem; }
     }
   </style>
 </head>
@@ -641,9 +379,7 @@
 
 <div class="app-shell">
 
-  <!-- ══════════════════════════════════════════════════════════
-       HEADER
-       ══════════════════════════════════════════════════════════ -->
+  <!-- HEADER -->
   <header class="header" role="banner">
     <div class="header__row1">
       <div class="header__brand">
@@ -662,66 +398,46 @@
 
   <main id="main-content">
 
-    <!-- ══════════════════════════════════════════════════════
-         SECTION 1 — Material picker
-         ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 1: Material picker -->
     <section class="picker-section" aria-labelledby="picker-label">
       <span class="picker-label" id="picker-label">Choose your material</span>
-
-      <div class="material-list" id="material-list" role="radiogroup"
-           aria-labelledby="picker-label">
-        <!-- populated by JS: renderMaterialCards() -->
+      <div class="material-list" id="material-list" role="radiogroup" aria-labelledby="picker-label">
+        <!-- renderMaterialCards() -->
       </div>
-
       <button class="btn-study" id="study-btn" type="button" disabled>
         Start studying
       </button>
     </section>
 
-    <!-- ══════════════════════════════════════════════════════
-         SECTION 2 — Study area (tabs)
-         ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 2: Study area (tabs) -->
     <section class="study-area hidden" id="study-area" aria-labelledby="study-title-text">
 
-      <!-- Material title strip -->
       <div class="study-title-bar">
         <span class="study-title-bar__id" id="study-material-id"></span>
         <span class="study-title-bar__title" id="study-title-text"></span>
       </div>
 
-      <!-- Tab bar -->
       <div class="tab-bar" role="tablist" aria-label="Study views">
         <button class="tab-btn" role="tab" id="tab-review"   aria-selected="true"  aria-controls="panel-review"   type="button">Quick review</button>
         <button class="tab-btn" role="tab" id="tab-terms"    aria-selected="false" aria-controls="panel-terms"    type="button">Key terms</button>
         <button class="tab-btn" role="tab" id="tab-practice" aria-selected="false" aria-controls="panel-practice" type="button">Practice</button>
       </div>
 
-      <!-- Panel: Quick review -->
       <div class="tab-panel active" role="tabpanel" id="panel-review" aria-labelledby="tab-review" tabindex="0">
-        <div id="review-content">
-          <!-- populated by renderReview() -->
-        </div>
+        <div id="review-content"></div>
       </div>
 
-      <!-- Panel: Key terms -->
       <div class="tab-panel" role="tabpanel" id="panel-terms" aria-labelledby="tab-terms" tabindex="0">
-        <div id="terms-content">
-          <!-- populated by renderTerms() -->
-        </div>
+        <div id="terms-content"></div>
       </div>
 
-      <!-- Panel: Practice -->
       <div class="tab-panel" role="tabpanel" id="panel-practice" aria-labelledby="tab-practice" tabindex="0">
-        <div id="practice-content">
-          <!-- populated by renderPractice() -->
-        </div>
+        <div id="practice-content"></div>
       </div>
 
     </section>
 
-    <!-- ══════════════════════════════════════════════════════
-         SECTION 3 — Help (always visible at bottom)
-         ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 3: Help -->
     <section class="help-section" id="help-section" aria-labelledby="help-title">
       <div class="help-section__header">
         <span class="help-section__title" id="help-title">Need a person?</span>
@@ -731,36 +447,35 @@
         </button>
       </div>
       <div id="help-section-body" class="help-cards hidden">
-        <!-- populated by renderHelp() -->
+        <!-- renderHelp() -->
       </div>
     </section>
 
   </main>
-</div><!-- /app-shell -->
+</div>
 
-<!-- ══════════════════════════════════════════════════════════════
-     ES MODULE — all application logic
-     ══════════════════════════════════════════════════════════════ -->
 <script type="module">
-import { COURSE, MATERIALS, QUESTION_BANK, KEY_TERMS, HELP_DIRECTORY } from './case_data.js';
+import { COURSE, MATERIALS, QUESTION_BANK, KEY_TERMS, KEY_TERMS_ES,
+         PLAIN_ENGLISH_BULLETS, HELP_OPTIONS, HELP_DIRECTORY } from './case_data.js';
 
 /* ══════════════════════════════════════════════════════════════
-   GLOBAL STATE
+   STATE
    ══════════════════════════════════════════════════════════════ */
 const state = {
-  isSampleMode:     false,
-  currentMaterial:  null,   // MATERIALS entry
-  currentQuestion:  null,   // QUESTION_BANK entry
-  quizAnswered:     false,
-  selectedOption:   null,   // "A"|"B"|"C"|"D"
+  isSampleMode:    false,
+  currentMaterial: null,
+  currentQuestion: null,
+  quizAnswered:    false,
+  selectedOption:  null,
+  // RB1: reading level and glossary language
+  readingLevel:    'course',    // 'course' | 'plain'
+  glossaryLang:    'en',        // 'en' | 'es'
 };
 
 /* ══════════════════════════════════════════════════════════════
-   AI STUB
-   Replace this body to wire a real endpoint, e.g.:
+   AI STUB — replace body to wire a real endpoint:
      const res = await fetch('/api/generate', {
-       method: 'POST',
-       headers: { 'Content-Type': 'application/json' },
+       method: 'POST', headers: { 'Content-Type': 'application/json' },
        body: JSON.stringify({ prompt })
      });
      return res.json(); // expects { text: string }
@@ -770,10 +485,9 @@ async function callAI(prompt) {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   SAMPLE GENERATORS (fallback when AI unavailable)
+   SAMPLE GENERATORS
    ══════════════════════════════════════════════════════════════ */
-function buildSampleBullets(material) {
-  // Split source text into sentences; return first 5 as bullet strings
+function buildCourseBullets(material) {
   const raw = material.source_text.match(/[^.!?]+[.!?]+/g) || [];
   return raw.slice(0, 5).map(s => s.trim()).filter(Boolean);
 }
@@ -793,16 +507,10 @@ function escHtml(str) {
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-// Wrap recognized course terms in <span class="term-em"> inside a string.
-// Terms are sourced from KEY_TERMS for the current material.
 function highlightTerms(text, materialId) {
   const terms = (KEY_TERMS[materialId] || []).map(t => t.term);
   if (!terms.length) return escHtml(text);
-  // Sort longest first so multi-word terms match before substrings
   const sorted = [...terms].sort((a, b) => b.length - a.length);
-  const pattern = new RegExp(`(${sorted.map(t =>
-    t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  ).join('|')})`, 'gi');
   return escHtml(text).replace(
     new RegExp(`(${sorted.map(t =>
       escHtml(t).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -817,21 +525,33 @@ function activateSampleMode() {
   document.getElementById('sample-mode-badge').classList.add('visible');
 }
 
-/* ══════════════════════════════════════════════════════════════
-   COMPONENT 1 — Material picker cards
-   ══════════════════════════════════════════════════════════════ */
-// Derive week number from material index among assigned items (W01, W02…)
+/** Check whether a source_excerpt actually appears in the material source_text.
+ *  Used by RB2 to determine if the excerpt can be shown as provenance. */
+function excerptVerified(material, excerpt) {
+  if (!excerpt || !material.source_text) return false;
+  // Case-insensitive substring match, ignoring leading/trailing whitespace
+  return material.source_text.toLowerCase().includes(excerpt.trim().toLowerCase());
+}
+
+/** Derive week label (1-based) from position within assigned list */
 function weekLabel(index) {
   return `Week ${String(index + 1).padStart(2, '0')}`;
 }
 
+function assignedIndex(materialId) {
+  return MATERIALS.filter(m => m.assigned_by_instructor).findIndex(m => m.id === materialId);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   COMPONENT 1 — Material picker
+   ══════════════════════════════════════════════════════════════ */
 function renderMaterialCards() {
   const container = document.getElementById('material-list');
-  const assigned = MATERIALS.filter(m => m.assigned_by_instructor);  // M06/M10 excluded
+  const assigned  = MATERIALS.filter(m => m.assigned_by_instructor); // M06/M10 excluded
 
   container.innerHTML = assigned.map((m, i) => {
-    const typeClass  = m.type === 'reading' ? 'pill--reading' : 'pill--lecture';
-    const typeLabel  = m.type === 'reading' ? '📄 Reading' : '📝 Lecture Notes';
+    const typeClass = m.type === 'reading' ? 'pill--reading' : 'pill--lecture';
+    const typeLabel = m.type === 'reading' ? '📄 Reading' : '📝 Lecture Notes';
     return `
       <div class="material-card">
         <input type="radio" name="material" id="mat-${m.id}" value="${m.id}"
@@ -843,15 +563,12 @@ function renderMaterialCards() {
           </div>
           <div class="material-card__title">${escHtml(m.title)}</div>
         </label>
-      </div>
-    `;
+      </div>`;
   }).join('');
 
-  // Enable Start button when a card is selected; track currentMaterial
   container.addEventListener('change', e => {
     if (e.target.name !== 'material') return;
-    const m = MATERIALS.find(x => x.id === e.target.value);
-    state.currentMaterial = m;
+    state.currentMaterial = MATERIALS.find(x => x.id === e.target.value);
     document.getElementById('study-btn').disabled = false;
   });
 
@@ -861,19 +578,13 @@ function renderMaterialCards() {
 function onStudyClick() {
   const m = state.currentMaterial;
   if (!m) return;
-
-  // Reset quiz state whenever a new material is selected
   resetQuizState();
 
-  // Update title strip
   document.getElementById('study-material-id').textContent = m.id;
   document.getElementById('study-title-text').textContent  = m.title;
-
-  // Show study area, switch to Quick Review tab
   document.getElementById('study-area').classList.remove('hidden');
   switchTab('review');
 
-  // Render all three panels for this material
   renderReview(m);
   renderTerms(m);
   renderPractice(m);
@@ -895,15 +606,12 @@ function initTabs() {
   ['review','terms','practice'].forEach(id => {
     document.getElementById(`tab-${id}`).addEventListener('click', () => switchTab(id));
   });
-  // Arrow-key keyboard navigation between tabs
   document.querySelector('[role="tablist"]').addEventListener('keydown', e => {
     const tabs = ['review','terms','practice'];
-    const current = tabs.findIndex(id =>
-      document.getElementById(`tab-${id}`).getAttribute('aria-selected') === 'true'
-    );
+    const cur = tabs.findIndex(id => document.getElementById(`tab-${id}`).getAttribute('aria-selected') === 'true');
     let next = -1;
-    if (e.key === 'ArrowRight') next = (current + 1) % tabs.length;
-    if (e.key === 'ArrowLeft')  next = (current + 2) % tabs.length;
+    if (e.key === 'ArrowRight') next = (cur + 1) % tabs.length;
+    if (e.key === 'ArrowLeft')  next = (cur + 2) % tabs.length;
     if (next >= 0) {
       e.preventDefault();
       switchTab(tabs[next]);
@@ -913,7 +621,41 @@ function initTabs() {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   COMPONENT 2 — Quick Review (bullets + source excerpt)
+   RB1 HELPER — render level/lang toggle pill group
+   ══════════════════════════════════════════════════════════════ */
+function levelToggleHTML(currentLevel, materialId) {
+  const hasPlain = !!PLAIN_ENGLISH_BULLETS[materialId];
+  if (!hasPlain) return ''; // no toggle if plain-English not available
+  return `
+    <div class="level-toggle" role="group" aria-label="Reading level">
+      <button class="level-btn" id="btn-level-course" type="button"
+              aria-pressed="${currentLevel === 'course'}"
+              data-level="course">Course wording</button>
+      <button class="level-btn" id="btn-level-plain"  type="button"
+              aria-pressed="${currentLevel === 'plain'}"
+              data-level="plain">Plain English</button>
+    </div>`;
+}
+
+function langToggleHTML(currentLang, materialId) {
+  const hasES = !!KEY_TERMS_ES[materialId];
+  if (!hasES) return ''; // no toggle if Spanish not available
+  return `
+    <div class="level-toggle" role="group" aria-label="Glossary language">
+      <button class="level-btn" id="btn-lang-en" type="button"
+              aria-pressed="${currentLang === 'en'}"
+              data-lang="en">English</button>
+      <button class="level-btn" id="btn-lang-es" type="button"
+              aria-pressed="${currentLang === 'es'}"
+              data-lang="es">Español</button>
+    </div>
+    ${currentLang === 'es'
+      ? sampleNoticeHTML('Traducción de muestra — no verificada / Sample translation — not verified')
+      : ''}`;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   COMPONENT 2 — Quick Review  (RB1: reading-level toggle)
    ══════════════════════════════════════════════════════════════ */
 async function renderReview(material) {
   const container = document.getElementById('review-content');
@@ -922,68 +664,120 @@ async function renderReview(material) {
   let bullets;
   let usedSample = false;
 
+  // Determine which bullet set to show
+  const level = state.readingLevel;
+  const plainBullets = PLAIN_ENGLISH_BULLETS[material.id];
+
   try {
-    const result = await callAI(
-      `Summarize the following biology study material as 4-5 short bullets for a college student. ` +
-      `Keep important course terms. Material: "${material.source_text}"`
-    );
-    // Expect result.text to be newline-separated bullet strings
-    bullets = result.text.split('\n').map(l => l.replace(/^[-•*]\s*/, '').trim()).filter(Boolean);
+    if (level === 'plain' && plainBullets) {
+      // Plain English: use deterministic fallback directly (no AI needed yet)
+      bullets = plainBullets;
+      usedSample = true; // local fallback
+    } else {
+      // Course wording: try AI first
+      const result = await callAI(
+        `Summarize the following biology study material as 4-5 short bullets for a college student. ` +
+        `Keep important course terms. Material: "${material.source_text}"`
+      );
+      bullets = result.text.split('\n').map(l => l.replace(/^[-•*]\s*/, '').trim()).filter(Boolean);
+    }
   } catch {
-    bullets = buildSampleBullets(material);
+    bullets = level === 'plain' && plainBullets ? plainBullets : buildCourseBullets(material);
     usedSample = true;
   }
 
   if (usedSample) activateSampleMode();
 
-  const bulletHTML = bullets.map(b =>
-    `<li>${highlightTerms(b, material.id)}</li>`
-  ).join('');
+  _renderReviewUI(material, bullets, usedSample, level);
+}
+
+function _renderReviewUI(material, bullets, usedSample, level) {
+  const container   = document.getElementById('review-content');
+  const toggleHTML  = levelToggleHTML(level, material.id);
+  const bulletHTML  = bullets.map(b => `<li>${highlightTerms(b, material.id)}</li>`).join('');
 
   container.innerHTML = `
+    ${toggleHTML}
     <ul class="review-bullets" aria-label="Quick review bullets">
       ${bulletHTML}
     </ul>
-    <div class="source-quote">
-      <span class="source-quote__label">From ${escHtml(material.id)}</span>
-      ${escHtml(material.excerpt)}
+    <div class="source-quote-inline">
+      <span class="source-label">From ${escHtml(material.id)}</span>
+      <div style="border-left:3px solid var(--green-mid);padding:.4rem .65rem;
+                  background:var(--green-lt);border-radius:0 6px 6px 0;
+                  font-size:.8rem;color:var(--muted);">
+        ${escHtml(material.excerpt)}
+      </div>
     </div>
-    ${usedSample ? sampleNoticeHTML('Quick review built from source text') : ''}
+    ${usedSample ? sampleNoticeHTML(
+        level === 'plain'
+          ? 'Plain English view — local fallback, not AI-generated'
+          : 'Quick review built from source text'
+      ) : ''}
   `;
+
+  // Wire level-toggle buttons
+  container.querySelectorAll('.level-btn[data-level]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.readingLevel = btn.dataset.level;
+      renderReview(material);
+    });
+  });
 }
 
 /* ══════════════════════════════════════════════════════════════
-   COMPONENT 3 — Key Terms
+   COMPONENT 3 — Key Terms  (RB1: Español / English toggle)
    ══════════════════════════════════════════════════════════════ */
 function renderTerms(material) {
   const container = document.getElementById('terms-content');
-  const terms = KEY_TERMS[material.id] || [];
-  const usedSample = true; // key_terms.csv not yet on disk — always sample
-
   activateSampleMode();
 
-  if (!terms.length) {
+  const lang  = state.glossaryLang;
+  const enTerms = KEY_TERMS[material.id] || [];
+  const esTerms = KEY_TERMS_ES[material.id] || null;
+
+  if (!enTerms.length) {
     container.innerHTML = `<p style="font-size:.88rem;color:var(--muted);">No key terms loaded for this material yet.</p>`;
     return;
   }
 
-  const cardsHTML = terms.map(t => `
-    <div class="term-card">
-      <div class="term-card__term">${escHtml(t.term)}</div>
-      <div class="term-card__def">${escHtml(t.definition)}</div>
-    </div>
-  `).join('');
+  // Build cards using the right language
+  const terms  = (lang === 'es' && esTerms) ? esTerms : enTerms;
+  const isES   = lang === 'es' && !!esTerms;
+
+  const cardsHTML = (lang === 'es' && esTerms)
+    ? esTerms.map(t => `
+        <div class="term-card">
+          <div class="term-card__term">${escHtml(t.term)}</div>
+          <div class="term-card__def">${escHtml(t.definition_es)}</div>
+        </div>`)
+      .join('')
+    : enTerms.map(t => `
+        <div class="term-card">
+          <div class="term-card__term">${escHtml(t.term)}</div>
+          <div class="term-card__def">${escHtml(t.definition)}</div>
+        </div>`)
+      .join('');
 
   container.innerHTML = `
+    ${langToggleHTML(lang, material.id)}
     <div class="terms-list" aria-label="Key terms">
       ${cardsHTML}
     </div>
     ${sampleNoticeHTML('Terms from built-in glossary · will update from data/key_terms.csv')}
   `;
+
+  // Wire lang-toggle buttons
+  container.querySelectorAll('.level-btn[data-lang]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.glossaryLang = btn.dataset.lang;
+      renderTerms(material);
+    });
+  });
 }
 
 /* ══════════════════════════════════════════════════════════════
-   COMPONENT 4 — Practice (pick → submit → feedback)
+   COMPONENT 4 — Practice
    ══════════════════════════════════════════════════════════════ */
 async function renderPractice(material) {
   const container = document.getElementById('practice-content');
@@ -993,9 +787,7 @@ async function renderPractice(material) {
   let usedSample = false;
 
   try {
-    // AI-generated question path (will also set usedSample=false)
     await callAI(`Generate one multiple-choice question from: "${material.source_text}"`);
-    // If AI returns, parse result into q — not reached today
   } catch {
     q = pickSampleQuestion(material.id);
     usedSample = true;
@@ -1009,8 +801,8 @@ async function renderPractice(material) {
   }
 
   state.currentQuestion = q;
-  state.quizAnswered     = false;
-  state.selectedOption   = null;
+  state.quizAnswered    = false;
+  state.selectedOption  = null;
 
   _renderPracticeUI(material, q, usedSample);
 }
@@ -1029,12 +821,11 @@ function _renderPracticeUI(material, q, isSample) {
           <span class="opt-letter" aria-hidden="true">${letter}<span class="opt-icon"></span></span>
           <span>${escHtml(opt)}</span>
         </label>
-      </li>
-    `;
+      </li>`;
   }).join('');
 
   container.innerHTML = `
-    <p class="material-id-line" style="font-size:.7rem;color:var(--muted);margin-bottom:.6rem;">
+    <p style="font-size:.7rem;color:var(--muted);margin-bottom:.6rem;">
       ${escHtml(material.id)} · ${escHtml(material.title)}
     </p>
     ${isSample ? `<div style="margin-bottom:.65rem;">${sampleQuestionBadgeHTML()}</div>` : ''}
@@ -1049,7 +840,6 @@ function _renderPracticeUI(material, q, isSample) {
     ${isSample ? sampleNoticeHTML('Sample question from question bank (not AI-generated)') : ''}
   `;
 
-  // Enable submit when an option is chosen
   container.querySelectorAll('input[name="practice-opt"]').forEach(radio => {
     radio.addEventListener('change', () => {
       state.selectedOption = radio.value;
@@ -1061,18 +851,16 @@ function _renderPracticeUI(material, q, isSample) {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   COMPONENT 5 — Answer reveal
-   Idempotent: second click does nothing.
+   COMPONENT 5 — Answer reveal  (RB2: View Source disclosure)
    ══════════════════════════════════════════════════════════════ */
 function revealAnswer(material, q) {
   if (state.quizAnswered) return;
   state.quizAnswered = true;
 
-  const selected   = state.selectedOption;
-  const isCorrect  = selected === q.answer;
+  const selected  = state.selectedOption;
+  const isCorrect = selected === q.answer;
   const optLetters = ['A','B','C','D'];
 
-  // Apply state classes to all labels; icons give color-independent feedback
   optLetters.forEach(letter => {
     const label = document.querySelector(`label[for="opt-${letter}"]`);
     const icon  = label && label.querySelector('.opt-icon');
@@ -1095,15 +883,33 @@ function revealAnswer(material, q) {
     ? '✓ Correct!'
     : `✗ Not quite — the right answer is ${q.answer}.`;
 
+  // RB2: build View Source disclosure
+  const idx      = assignedIndex(material.id);
+  const week     = idx >= 0 ? weekLabel(idx) : '';
+  const verified = excerptVerified(material, q.source_excerpt);
+  const sourceDisclosureHTML = verified
+    ? `<details class="source-disclosure">
+        <summary>View source</summary>
+        <div class="source-disclosure__body">
+          <div class="source-disclosure__meta">
+            <span class="source-meta-pill source-meta-pill--assigned">✓ Instructor-assigned</span>
+            <span class="source-meta-pill source-meta-pill--mid">${escHtml(material.id)}</span>
+            ${week ? `<span class="source-meta-pill source-meta-pill--mid">${escHtml(week)}</span>` : ''}
+          </div>
+          <span class="source-label">${escHtml(material.title)}</span>
+          <p class="source-excerpt-text">"${escHtml(q.source_excerpt)}"</p>
+        </div>
+      </details>`
+    : `<p style="font-size:.78rem;color:var(--muted);margin-top:.4rem;">
+         (Supporting source excerpt not available for this question.)
+       </p>`;
+
   const feedbackEl = document.getElementById('answer-feedback');
   feedbackEl.innerHTML = `
     <div class="feedback-banner ${bannerClass}" role="alert">${bannerText}</div>
     <div class="feedback-body">
       <p class="feedback-explanation">${escHtml(q.explanation)}</p>
-      <div class="source-quote">
-        <span class="source-quote__label">Source — ${escHtml(material.id)}</span>
-        ${escHtml(q.source_excerpt)}
-      </div>
+      <div class="source-disclosure">${sourceDisclosureHTML}</div>
     </div>
   `;
   feedbackEl.classList.add('visible');
@@ -1111,70 +917,82 @@ function revealAnswer(material, q) {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   COMPONENT 6 — Help directory
+   RB3 — Help panel (from HELP_OPTIONS)
    ══════════════════════════════════════════════════════════════ */
 function renderHelp() {
   const body = document.getElementById('help-section-body');
-  body.innerHTML = HELP_DIRECTORY.map(h => `
-    <div class="help-card">
-      <div class="help-card__name">${escHtml(h.name)}</div>
-      <div class="help-card__role">${escHtml(h.role)}</div>
-      <a class="help-card__link" href="mailto:${escHtml(h.contact)}">${escHtml(h.contact)}</a>
-      ${h.phone ? `<div class="help-card__hours">${escHtml(h.phone)}</div>` : ''}
-      <div class="help-card__hours">${escHtml(h.hours)}</div>
-    </div>
-  `).join('');
 
-  // Both the top-bar "Get help" button and the section toggle open the same list
-  function toggleHelp(btn) {
-    const expanded = body.classList.toggle('hidden');
-    const isOpen   = !expanded;
-    btn.setAttribute('aria-expanded', String(isOpen));
-    btn.textContent = isOpen
-      ? (btn.id === 'help-toggle-btn' ? 'Hide ▴' : 'Get help')
-      : (btn.id === 'help-toggle-btn' ? 'Show ▾' : 'Get help');
-    if (isOpen && btn.id === 'get-help-btn') {
-      document.getElementById('help-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  body.innerHTML = HELP_OPTIONS.map(h => {
+    const featured    = h.id === 'online-tutoring';
+    const badgeHTML   = h.is_24_7
+      ? `<span class="help-card__badge help-card__badge--24h">24/7</span> `
+      : '';
+    const sampleHTML  = h.sample_data
+      ? `<span class="help-card__badge help-card__badge--sample">Sample data</span> `
+      : '';
+
+    let actionHTML = '';
+    if (h.contact_type === 'email' && h.contact_value) {
+      actionHTML = `<a class="help-card__link" href="mailto:${escHtml(h.contact_value)}">${escHtml(h.contact_value)}</a>`;
+    } else if (h.contact_type === 'phone' && h.contact_value) {
+      actionHTML = `<a class="help-card__link" href="tel:${escHtml(h.contact_value)}">${escHtml(h.contact_value)}</a>`;
+    } else if (h.contact_type === 'portal' && h.directions) {
+      // Portal with no live URL: show directions instead of a dead link
+      actionHTML = `<div class="help-card__directions">${escHtml(h.directions)}</div>`;
     }
-  }
 
-  document.getElementById('help-toggle-btn').addEventListener('click', e => toggleHelp(e.currentTarget));
-  document.getElementById('get-help-btn').addEventListener('click', e => {
-    // Always open (never toggle from header)
-    if (body.classList.contains('hidden')) body.classList.remove('hidden');
+    return `
+      <div class="help-card${featured ? ' help-card--featured' : ''}">
+        <div>${badgeHTML}${sampleHTML}</div>
+        <div class="help-card__name">${escHtml(h.name)}</div>
+        <div class="help-card__best">${escHtml(h.best_for)}</div>
+        <div class="help-card__avail">${escHtml(h.availability)}</div>
+        <div class="help-card__action">${actionHTML}</div>
+      </div>`;
+  }).join('');
+
+  function openHelp() {
+    body.classList.remove('hidden');
     document.getElementById('help-toggle-btn').textContent = 'Hide ▴';
     document.getElementById('help-toggle-btn').setAttribute('aria-expanded', 'true');
+  }
+
+  document.getElementById('help-toggle-btn').addEventListener('click', () => {
+    const isHidden = body.classList.toggle('hidden');
+    const btn = document.getElementById('help-toggle-btn');
+    btn.setAttribute('aria-expanded', String(!isHidden));
+    btn.textContent = isHidden ? 'Show ▾' : 'Hide ▴';
+  });
+
+  document.getElementById('get-help-btn').addEventListener('click', () => {
+    openHelp();
     document.getElementById('help-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 }
 
 /* ══════════════════════════════════════════════════════════════
-   QUIZ RESET — called when material changes
+   QUIZ RESET
    ══════════════════════════════════════════════════════════════ */
 function resetQuizState() {
-  state.quizAnswered   = false;
-  state.selectedOption = null;
+  state.quizAnswered    = false;
+  state.selectedOption  = null;
   state.currentQuestion = null;
-  // The practice-content div is re-rendered by renderPractice(), which
-  // creates fresh radio buttons and a fresh feedback block, so stale
-  // answer state cannot persist under a new material.
+  // reading level and lang persist across materials (intentional UX)
 }
 
 /* ══════════════════════════════════════════════════════════════
-   SMALL HTML BUILDERS
+   HTML BUILDERS
    ══════════════════════════════════════════════════════════════ */
 function sampleNoticeHTML(msg) {
   return `
     <div class="sample-notice visible" role="note">
       <span class="sample-notice__icon" aria-hidden="true">ℹ</span>
       <span>Sample content — ${escHtml(msg)}</span>
-    </div>
-  `;
+    </div>`;
 }
 
 function sampleQuestionBadgeHTML() {
-  return `<span style="
-    display:inline-block;font-size:.68rem;font-weight:800;
+  return `<span style="display:inline-block;font-size:.68rem;font-weight:800;
     text-transform:uppercase;letter-spacing:.05em;
     background:var(--gold-lt);border:1px solid #f5d78e;
     color:#7a5500;border-radius:999px;padding:.12rem .5rem;">
@@ -1188,7 +1006,6 @@ function sampleQuestionBadgeHTML() {
 (function boot() {
   document.getElementById('course-label').textContent =
     `${COURSE.id} · ${COURSE.section}`;
-
   renderMaterialCards();
   initTabs();
   renderHelp();

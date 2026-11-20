@@ -272,29 +272,72 @@ const QUESTION_BANK = {
 };
 
 /** Sample staff directory for the human-help link */
-const HELP_DIRECTORY = [
+/**
+ * HELP_OPTIONS — runtime equivalent of help_options.csv.
+ * Schema: { id, name, role, best_for, availability, contact_type,
+ *           contact_value, directions, is_24_7, sample_data: true }
+ * contact_type: "email" | "phone" | "portal" | "chat"
+ * For portal routes with no live URL, directions explains how to reach them.
+ */
+const HELP_OPTIONS = [
   {
-    name: "Academic Support Center",
-    role: "Tutoring & Study Help",
-    contact: "academic-support@ivytech.edu",
-    hours: "Mon–Thu 8am–8pm · Fri 8am–5pm",
-    phone: "(317) 921-4800"
+    id: "online-tutoring",
+    name: "Online Tutoring (24/7)",
+    role: "Late-night content help",
+    best_for: "Content questions about readings and lecture notes, any time of day or night",
+    availability: "24 hours a day, 7 days a week",
+    contact_type: "portal",
+    contact_value: null,
+    directions: "Log in to MyIvy → Student Services → Tutoring → Start a Session. Choose Biology from the subject list.",
+    is_24_7: true,
+    sample_data: true
   },
   {
+    id: "biology-tutor",
+    name: "Biology Tutoring Center",
+    role: "Scheduled biology tutoring",
+    best_for: "In-depth help with BIOL 101 concepts, lab prep, and exam review",
+    availability: "Mon/Wed 10am–2pm · Tue/Thu 1pm–5pm · Sat 10am–1pm",
+    contact_type: "email",
+    contact_value: "bio-tutoring@ivytech.edu",
+    directions: null,
+    is_24_7: false,
+    sample_data: true
+  },
+  {
+    id: "instructor",
     name: "Prof. M. Torres",
     role: "BIOL 101 Instructor",
-    contact: "mtorres@ivytech.edu",
-    hours: "Office hours: Tue/Thu 2–4pm",
-    phone: null
+    best_for: "Questions about graded work, assignment requirements, or course policies",
+    availability: "Office hours: Tue/Thu 2–4pm · or by appointment",
+    contact_type: "email",
+    contact_value: "mtorres@ivytech.edu",
+    directions: null,
+    is_24_7: false,
+    sample_data: true
   },
   {
-    name: "Ivy Tech Online Help Desk",
-    role: "Technical & Course Access Issues",
-    contact: "helpdesk@ivytech.edu",
-    hours: "24/7 phone & chat",
-    phone: "1-888-IVY-LINE"
+    id: "help-desk",
+    name: "Ivy Tech Help Desk",
+    role: "Technical & account issues",
+    best_for: "Login problems, Blackboard access, or anything technical",
+    availability: "24/7 phone & chat",
+    contact_type: "phone",
+    contact_value: "1-888-IVY-LINE",
+    directions: null,
+    is_24_7: true,
+    sample_data: false
   }
 ];
+
+/** @deprecated — kept for backwards compatibility; use HELP_OPTIONS instead */
+const HELP_DIRECTORY = HELP_OPTIONS.map(h => ({
+  name: h.name,
+  role: h.role,
+  contact: h.contact_value || h.directions || "",
+  hours: h.availability,
+  phone: h.contact_type === "phone" ? h.contact_value : null
+}));
 
 /**
  * KEY_TERMS — keyed by material ID.
@@ -374,4 +417,93 @@ const KEY_TERMS = {
   ]
 };
 
-export { COURSE, MATERIALS, QUESTION_BANK, KEY_TERMS, HELP_DIRECTORY };
+/**
+ * KEY_TERMS_ES — Spanish glossary, keyed by material ID.
+ * Source: sample CSV rows (data/key_terms_es.csv — not yet on disk).
+ * Only assigned materials M01–M05 have sample Spanish rows.
+ * Label: "Traducción de muestra — no verificada / Sample translation — not verified"
+ */
+const KEY_TERMS_ES = {
+  M01: [
+    { term: "Hypothesis",        definition_es: "Una explicación comprobable y falsificable de una observación, propuesta antes de la experimentación." },
+    { term: "Independent variable", definition_es: "El único factor que se cambia deliberadamente en un experimento controlado." },
+    { term: "Scientific theory",  definition_es: "Una explicación bien fundamentada respaldada por experimentos repetidos y revisados por pares — el nivel más alto de comprensión científica." },
+    { term: "Peer review",        definition_es: "Evaluación del trabajo científico por otros expertos antes de su publicación, para proteger contra sesgos y errores." }
+  ],
+  M02: [
+    { term: "Prokaryotic cell",   definition_es: "Una célula sin núcleo delimitado por membrana; el ADN flota libremente en el citoplasma. Las bacterias y las arqueas son procariotas." },
+    { term: "Eukaryotic cell",    definition_es: "Una célula con núcleo delimitado por membrana que alberga el material genético. Se encuentra en plantas, animales, hongos y protistas." },
+    { term: "Mitochondria",       definition_es: "Orgánulo que produce ATP mediante la respiración celular; a menudo llamado la 'central eléctrica de la célula'." },
+    { term: "Phospholipid bilayer", definition_es: "La estructura de dos capas de la membrana plasmática que controla lo que entra y sale de una célula (permeabilidad selectiva)." },
+    { term: "Golgi apparatus",    definition_es: "Orgánulo que procesa y empaqueta proteínas para su secreción o uso dentro de la célula." }
+  ],
+  M03: [
+    { term: "Mitosis",            definition_es: "División celular que produce dos células hijas genéticamente idénticas; utilizada para el crecimiento y la reparación." },
+    { term: "Meiosis",            definition_es: "División celular que produce cuatro células haploides genéticamente únicas; utilizada para la reproducción sexual." },
+    { term: "Prophase",           definition_es: "Primera etapa de la mitosis: los cromosomas se condensan y comienza a formarse el huso acromático." },
+    { term: "Metaphase",          definition_es: "Etapa de la mitosis en la que los cromosomas se alinean en la placa ecuatorial de la célula." },
+    { term: "Crossing over",      definition_es: "Intercambio de segmentos de cromosomas entre cromosomas homólogos durante la Meiosis I, aumentando la diversidad genética." },
+    { term: "Cytokinesis",        definition_es: "División del citoplasma después de la división nuclear, completando la separación celular." }
+  ],
+  M04: [
+    { term: "Photosynthesis",     definition_es: "El proceso por el cual los cloroplastos convierten la energía luminosa en energía química (glucosa). Ecuación: 6CO₂ + 6H₂O + luz → C₆H₁₂O₆ + 6O₂." },
+    { term: "Calvin cycle",       definition_es: "Las reacciones independientes de la luz en el estroma del cloroplasto que usan ATP y NADPH para fijar CO₂ en glucosa." },
+    { term: "Cellular respiration", definition_es: "El proceso de oxidar glucosa para liberar ATP; ocurre mediante la glucólisis, el ciclo de Krebs y la fosforilación oxidativa." },
+    { term: "ATP",                definition_es: "Trifosfato de adenosina — la principal moneda energética de las células, producida por las mitocondrias." },
+    { term: "Thylakoid membrane", definition_es: "La membrana dentro de un cloroplasto donde ocurren las reacciones dependientes de la luz de la fotosíntesis." }
+  ],
+  M05: [
+    { term: "DNA",                definition_es: "Ácido desoxirribonucleico — un polímero de doble hélice de nucleótidos que porta la información genética." },
+    { term: "Nucleotide",         definition_es: "El monómero del ADN, que consta de un azúcar desoxirribosa, un grupo fosfato y una de cuatro bases nitrogenadas (A, T, G o C)." },
+    { term: "Base pairing",       definition_es: "Emparejamiento específico por puentes de hidrógeno: adenina (A) con timina (T), guanina (G) con citosina (C)." },
+    { term: "Semiconservative replication", definition_es: "Cada nueva molécula de ADN contiene una cadena original y una cadena recién sintetizada." },
+    { term: "DNA polymerase",     definition_es: "Enzima que sintetiza nuevas cadenas de ADN en dirección 5'→3' y corrige errores." },
+    { term: "Helicase",           definition_es: "Enzima que desenrolla la doble hélice de ADN en la horquilla de replicación durante la replicación del ADN." }
+  ]
+};
+
+/**
+ * PLAIN_ENGLISH_BULLETS — deterministic plain-language summaries, keyed by
+ * material ID. Only assigned materials M01–M05 included.
+ * Rules: shorter sentences, key terms defined on first use, scientific names kept.
+ */
+const PLAIN_ENGLISH_BULLETS = {
+  M01: [
+    "Scientists follow a step-by-step process to answer questions. It starts with noticing something interesting (observation), then asking a question about it.",
+    "A hypothesis is an educated guess you can test. You change one thing at a time (the independent variable) to see what happens, while keeping everything else the same.",
+    "Data from experiments either support the hypothesis or show it needs changing. Science works by testing ideas over and over.",
+    "A theory is not a guess — it is an explanation that has been tested many times by many scientists. It is the highest level of scientific understanding.",
+    "Peer review means other scientists check the work before it gets published. This catches mistakes and keeps science trustworthy."
+  ],
+  M02: [
+    "Every living thing is made of cells — the smallest unit of life. Bacteria cells (prokaryotes) have no nucleus. Plant and animal cells (eukaryotes) have a nucleus that holds DNA.",
+    "Inside eukaryotic cells are organelles, each with a job. Mitochondria make energy (ATP) through cellular respiration — think of them as tiny power plants.",
+    "The ribosome builds proteins. The endoplasmic reticulum moves proteins and lipids around. The Golgi apparatus packages them for delivery.",
+    "Plant cells have two extras: chloroplasts (for photosynthesis) and a stiff cell wall made of cellulose that holds the cell's shape.",
+    "Every cell is wrapped in a plasma membrane — a phospholipid bilayer that controls what gets in and out."
+  ],
+  M03: [
+    "Cells divide to let the body grow, heal, and reproduce. There are two main types: mitosis (for growth) and meiosis (for reproduction).",
+    "Mitosis makes two identical copies. It has four stages: Prophase (chromosomes appear), Metaphase (they line up), Anaphase (they split), Telophase (two nuclei form). Then the cell splits — called cytokinesis.",
+    "Meiosis makes four cells with half the usual number of chromosomes — these become sperm or egg cells. It goes through two rounds of division.",
+    "During Meiosis I, chromosomes swap segments in a process called crossing over. This mixes genetic information so offspring are not identical to their parents.",
+    "Think of it this way: mitosis = copy machine (identical); meiosis = shuffling a deck of cards (new combinations every time)."
+  ],
+  M04: [
+    "Photosynthesis is how plants make food from sunlight. Inside leaf cells, chloroplasts turn water and CO₂ into glucose (sugar) and oxygen.",
+    "It has two stages: the light reactions (in the thylakoid membrane) capture sunlight as ATP and NADPH. The Calvin cycle (in the stroma) uses that energy to build glucose.",
+    "Simple equation: 6 CO₂ + 6 H₂O + sunlight → glucose + 6 O₂. The plant uses the glucose; the oxygen is what we breathe.",
+    "Cellular respiration reverses this: cells break glucose down to release ATP energy. It happens via glycolysis, the Krebs cycle, and oxidative phosphorylation in the mitochondria.",
+    "One glucose molecule can produce up to 36–38 ATP molecules — a highly efficient energy process."
+  ],
+  M05: [
+    "DNA (deoxyribonucleic acid) stores your genetic instructions in a twisted ladder shape called a double helix. The 'rungs' are base pairs: A always pairs with T, G always pairs with C.",
+    "Before a cell divides, it copies all its DNA so each new cell gets a full set. This is called DNA replication.",
+    "An enzyme called helicase unzips the two strands. Then DNA polymerase reads each strand and builds a new matching strand alongside it.",
+    "Because each new molecule keeps one original strand and gains one new strand, the process is called semiconservative replication.",
+    "DNA polymerase is very accurate — about one error per billion base pairs — because it proofreads its own work."
+  ]
+};
+
+export { COURSE, MATERIALS, QUESTION_BANK, KEY_TERMS, KEY_TERMS_ES,
+         PLAIN_ENGLISH_BULLETS, HELP_OPTIONS, HELP_DIRECTORY };
