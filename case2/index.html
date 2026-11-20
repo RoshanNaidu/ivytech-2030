@@ -3,29 +3,48 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BIOL 101 Study — Ivy Tech 2030</title>
+  <title>Study Shift — BIOL 101 · Ivy Tech 2030</title>
   <style>
-    /* ── Reset & base ─────────────────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    /* ══════════════════════════════════════════════════════════
+       DESIGN TOKENS
+       Warm off-white bg, deep evergreen primary, soft lavender accent
+       ══════════════════════════════════════════════════════════ */
     :root {
-      --green:  #00843D;
-      --green-dk: #005c2a;
-      --gold:   #F0A500;
-      --bg:     #f5f7fa;
-      --surface:#ffffff;
-      --border: #d1d5db;
-      --text:   #1f2328;
-      --muted:  #57606a;
-      --focus:  #3b82f6;
-      --radius: 10px;
-      --gap:    1rem;
+      /* Palette */
+      --bg:          #faf8f5;      /* warm off-white */
+      --surface:     #ffffff;
+      --surface-alt: #f4f1ee;      /* slightly warmer card bg */
+      --border:      #e0dbd4;
+      --green:       #1a4d35;      /* deep evergreen */
+      --green-mid:   #2d6a4a;
+      --green-lt:    #e8f4ee;      /* tint for hover/selected */
+      --lavender:    #7c6fcd;      /* soft lavender accent (selected state) */
+      --lavender-lt: #ede9f9;      /* lavender tint */
+      --text:        #22201d;
+      --text-mid:    #4a4740;
+      --muted:       #7a7268;
+      --gold:        #c9820a;      /* sample-mode amber */
+      --gold-lt:     #fef3dc;
+      --focus:       #2563eb;      /* keyboard focus ring */
+      --correct-bg:  #e8f5eb;
+      --correct-fg:  #1a4d35;
+      --correct-border: #5aad70;
+      --wrong-bg:    #fdf0f0;
+      --wrong-fg:    #8b1a1a;
+      --wrong-border:#d87070;
+      --radius-sm:   8px;
+      --radius:      14px;
+      --radius-lg:   20px;
     }
+
+    /* ── Reset ───────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { font-size: 16px; }
     body {
       font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
       background: var(--bg);
       color: var(--text);
-      line-height: 1.6;
+      line-height: 1.65;
       min-height: 100dvh;
     }
 
@@ -36,281 +55,567 @@
       border-radius: 4px;
     }
 
-    /* ── Layout ──────────────────────────────────────────────── */
+    /* ── Skip-to-content (a11y) ──────────────────────────────── */
+    .skip-link {
+      position: absolute; top: -100px; left: 0;
+      background: var(--focus); color: #fff;
+      padding: .4rem .9rem; border-radius: 0 0 8px 8px;
+      font-size: .9rem; font-weight: 600; z-index: 200;
+      text-decoration: none;
+    }
+    .skip-link:focus { top: 0; }
+
+    /* ── App shell ───────────────────────────────────────────── */
     .app-shell {
-      max-width: 600px;
+      max-width: 480px;        /* comfortable phone width */
       margin: 0 auto;
-      padding: 0 0 4rem;
+      padding-bottom: 5rem;
     }
 
-    /* ── Top bar ─────────────────────────────────────────────── */
-    .topbar {
+    /* ══════════════════════════════════════════════════════════
+       HEADER
+       ══════════════════════════════════════════════════════════ */
+    .header {
       background: var(--green);
       color: #fff;
-      padding: .75rem 1rem;
+      padding: .9rem 1rem .8rem;
+      position: sticky; top: 0; z-index: 10;
+    }
+    .header__row1 {
       display: flex;
       align-items: center;
-      gap: .6rem;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-    .topbar__logo {
-      font-weight: 700;
-      font-size: 1rem;
-      letter-spacing: .02em;
-      white-space: nowrap;
-    }
-    .topbar__course {
-      font-size: .8rem;
-      opacity: .85;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .topbar__mode-badge {
-      margin-left: auto;
-      background: var(--gold);
-      color: #000;
-      font-size: .7rem;
-      font-weight: 700;
-      padding: .15rem .5rem;
-      border-radius: 999px;
-      white-space: nowrap;
-      display: none; /* shown only in sample mode */
-    }
-    .topbar__mode-badge.visible { display: inline-block; }
-
-    /* ── Page sections ───────────────────────────────────────── */
-    .section {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      margin: var(--gap) .75rem 0;
-      padding: 1rem;
-    }
-    .section__title {
-      font-size: .75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .07em;
-      color: var(--muted);
-      margin-bottom: .6rem;
-    }
-
-    /* ── Material selector ───────────────────────────────────── */
-    #selector-section select {
-      width: 100%;
-      font-size: 1rem;
-      padding: .6rem .8rem;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: var(--surface);
-      color: var(--text);
-      appearance: none;
-      -webkit-appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2357606a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right .8rem center;
-      cursor: pointer;
-    }
-    .material-meta {
-      display: flex;
+      justify-content: space-between;
       gap: .5rem;
-      margin-top: .5rem;
-      flex-wrap: wrap;
     }
-    .badge {
-      font-size: .7rem;
-      font-weight: 600;
-      padding: .15rem .5rem;
+    .header__brand {
+      display: flex;
+      flex-direction: column;
+      gap: .05rem;
+    }
+    .header__app-name {
+      font-size: 1.1rem;
+      font-weight: 800;
+      letter-spacing: -.01em;
+      line-height: 1.1;
+    }
+    .header__course {
+      font-size: .78rem;
+      opacity: .82;
+      letter-spacing: .01em;
+    }
+    .header__right {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      flex-shrink: 0;
+    }
+    /* "Get help" button in header */
+    .btn-help {
+      background: rgba(255,255,255,.18);
+      border: 1.5px solid rgba(255,255,255,.55);
+      color: #fff;
+      font-size: .78rem;
+      font-weight: 700;
+      padding: .35rem .75rem;
       border-radius: 999px;
-      border: 1px solid;
-    }
-    .badge--reading   { color: #0369a1; border-color: #bae6fd; background: #e0f2fe; }
-    .badge--lecture   { color: #6d28d9; border-color: #ddd6fe; background: #ede9fe; }
-    .badge--assigned  { color: #065f46; border-color: #a7f3d0; background: #d1fae5; }
-
-    .btn {
+      cursor: pointer;
+      white-space: nowrap;
+      min-height: 36px;
+      min-width: 72px;
+      text-decoration: none;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: .4rem;
-      font-size: 1rem;
-      font-weight: 600;
-      padding: .65rem 1.2rem;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
       transition: background .15s;
-      text-decoration: none;
     }
-    .btn:disabled { opacity: .45; cursor: default; }
-    .btn--primary {
-      background: var(--green);
-      color: #fff;
-      width: 100%;
-      margin-top: .75rem;
-    }
-    .btn--primary:hover:not(:disabled) { background: var(--green-dk); }
-    .btn--outline {
-      background: transparent;
-      color: var(--green);
-      border: 2px solid var(--green);
-      width: 100%;
-      margin-top: .5rem;
-    }
-    .btn--outline:hover:not(:disabled) { background: #e6f4ec; }
-    .btn--answer {
+    .btn-help:hover { background: rgba(255,255,255,.3); }
+    .btn-help:focus-visible { outline-color: #fff; }
+    /* Sample mode badge */
+    .sample-badge {
       background: var(--gold);
       color: #000;
-      width: 100%;
-      margin-top: .75rem;
-      font-weight: 700;
+      font-size: .66rem;
+      font-weight: 800;
+      padding: .15rem .5rem;
+      border-radius: 999px;
+      white-space: nowrap;
+      display: none;
+      letter-spacing: .03em;
     }
-    .btn--answer:hover:not(:disabled) { background: #c98c00; }
+    .sample-badge.visible { display: inline-block; }
 
-    /* ── Summary component ───────────────────────────────────── */
-    .summary-body {
-      font-size: .95rem;
-      line-height: 1.7;
+    /* ══════════════════════════════════════════════════════════
+       MATERIAL PICKER SECTION
+       ══════════════════════════════════════════════════════════ */
+    .picker-section {
+      padding: 1.1rem 1rem .9rem;
     }
-    .source-excerpt {
-      margin-top: .75rem;
-      padding: .6rem .8rem;
-      border-left: 3px solid var(--green);
-      background: #f0faf4;
-      font-size: .82rem;
-      color: var(--muted);
-      border-radius: 0 6px 6px 0;
-    }
-    .source-excerpt strong {
-      display: block;
-      font-size: .7rem;
+    .picker-label {
+      font-size: .72rem;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: .06em;
-      color: var(--green-dk);
+      letter-spacing: .08em;
+      color: var(--muted);
+      margin-bottom: .55rem;
+      display: block;
+    }
+
+    /* Material cards (radio-button cards) */
+    .material-list {
+      display: flex;
+      flex-direction: column;
+      gap: .55rem;
+    }
+    .material-card {
+      position: relative;
+    }
+    .material-card input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+      width: 0; height: 0;
+    }
+    .material-card__label {
+      display: flex;
+      flex-direction: column;
+      gap: .15rem;
+      padding: .75rem .9rem;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      transition: border-color .12s, background .12s, box-shadow .12s;
+      min-height: 52px;
+    }
+    .material-card__label:hover {
+      border-color: var(--green-mid);
+      background: var(--green-lt);
+    }
+    /* Selected state uses lavender */
+    .material-card input[type="radio"]:checked + .material-card__label {
+      border-color: var(--lavender);
+      background: var(--lavender-lt);
+      box-shadow: 0 0 0 1px var(--lavender);
+    }
+    .material-card input[type="radio"]:focus-visible + .material-card__label {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+    .material-card__meta {
+      display: flex;
+      gap: .4rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .material-card__title {
+      font-size: .95rem;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.3;
+    }
+    /* Pill badges */
+    .pill {
+      font-size: .66rem;
+      font-weight: 700;
+      padding: .12rem .45rem;
+      border-radius: 999px;
+      border: 1px solid;
+      white-space: nowrap;
+      letter-spacing: .02em;
+    }
+    .pill--reading   { color: #0c5a8a; border-color: #b3d9f2; background: #e6f2fb; }
+    .pill--lecture   { color: #4a2080; border-color: #cfc0f0; background: #ede9f9; }
+    .pill--week      { color: var(--muted); border-color: var(--border); background: var(--surface-alt); }
+
+    /* CTA button below picker */
+    .btn-study {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      margin-top: .9rem;
+      padding: .8rem 1rem;
+      background: var(--green);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      min-height: 48px;
+      transition: background .15s;
+      letter-spacing: .01em;
+    }
+    .btn-study:hover { background: var(--green-mid); }
+    .btn-study:disabled { opacity: .4; cursor: default; }
+
+    /* ══════════════════════════════════════════════════════════
+       STUDY AREA (tabs + panels)
+       ══════════════════════════════════════════════════════════ */
+    .study-area {
+      padding: 0 1rem;
+    }
+    .study-area.hidden { display: none; }
+
+    /* Material title strip above tabs */
+    .study-title-bar {
+      display: flex;
+      align-items: flex-start;
+      gap: .6rem;
+      padding: .85rem 0 .6rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: .1rem;
+    }
+    .study-title-bar__id {
+      font-size: .68rem;
+      font-weight: 800;
+      color: var(--green-mid);
+      background: var(--green-lt);
+      border: 1px solid #b6dcca;
+      border-radius: 6px;
+      padding: .15rem .45rem;
+      flex-shrink: 0;
+      margin-top: .15rem;
+    }
+    .study-title-bar__title {
+      font-size: .9rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+    }
+
+    /* Tab bar */
+    .tab-bar {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 1rem;
+    }
+    .tab-btn {
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      padding: .6rem .4rem .55rem;
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      text-align: center;
+      transition: color .12s, border-color .12s;
+      white-space: nowrap;
+      min-height: 44px;
+    }
+    .tab-btn:hover { color: var(--green); }
+    .tab-btn[aria-selected="true"] {
+      color: var(--green);
+      border-bottom-color: var(--green);
+    }
+    .tab-btn:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: -2px;
+      border-radius: 4px 4px 0 0;
+    }
+
+    /* Tab panels */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ══════════════════════════════════════════════════════════
+       QUICK REVIEW PANEL
+       ══════════════════════════════════════════════════════════ */
+    .review-bullets {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+      margin: 0 0 .9rem;
+    }
+    .review-bullets li {
+      display: flex;
+      gap: .6rem;
+      align-items: flex-start;
+      font-size: .95rem;
+      line-height: 1.5;
+    }
+    .review-bullets li::before {
+      content: "▸";
+      color: var(--green-mid);
+      flex-shrink: 0;
+      margin-top: .05rem;
+      font-size: .85rem;
+    }
+    /* Course term emphasis inside bullets */
+    .term-em {
+      font-weight: 700;
+      color: var(--green);
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       KEY TERMS PANEL
+       ══════════════════════════════════════════════════════════ */
+    .terms-list {
+      display: flex;
+      flex-direction: column;
+      gap: .6rem;
+    }
+    .term-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: .7rem .85rem;
+    }
+    .term-card__term {
+      font-weight: 700;
+      font-size: .95rem;
+      color: var(--green);
       margin-bottom: .2rem;
     }
-    .material-id-line {
-      font-size: .72rem;
-      color: var(--muted);
-      margin-bottom: .4rem;
+    .term-card__def {
+      font-size: .88rem;
+      color: var(--text-mid);
+      line-height: 1.55;
     }
 
-    /* ── Practice component ──────────────────────────────────── */
-    .practice-question {
-      font-size: 1rem;
+    /* ══════════════════════════════════════════════════════════
+       PRACTICE PANEL
+       ══════════════════════════════════════════════════════════ */
+    .practice-q {
+      font-size: .97rem;
       font-weight: 600;
-      margin-bottom: .75rem;
+      line-height: 1.45;
+      margin-bottom: .85rem;
+      color: var(--text);
     }
     .options-list {
       list-style: none;
       display: flex;
       flex-direction: column;
       gap: .5rem;
+      margin-bottom: .85rem;
     }
-    .options-list li label {
+    .options-list li { position: relative; }
+    .options-list input[type="radio"] {
+      position: absolute;
+      opacity: 0; width: 0; height: 0;
+    }
+    .option-label {
       display: flex;
       align-items: flex-start;
-      gap: .6rem;
-      padding: .6rem .8rem;
-      border: 1px solid var(--border);
-      border-radius: 8px;
+      gap: .65rem;
+      padding: .7rem .85rem;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
       cursor: pointer;
-      font-size: .95rem;
+      font-size: .93rem;
+      line-height: 1.4;
+      background: var(--surface);
       transition: border-color .1s, background .1s;
+      min-height: 48px;
     }
-    .options-list li label:hover { border-color: var(--green); background: #f0faf4; }
-    .options-list li input[type="radio"] {
-      margin-top: .2rem;
+    .option-label:hover { border-color: var(--green-mid); background: var(--green-lt); }
+    .options-list input[type="radio"]:checked + .option-label {
+      border-color: var(--lavender);
+      background: var(--lavender-lt);
+      box-shadow: 0 0 0 1px var(--lavender);
+    }
+    .options-list input[type="radio"]:focus-visible + .option-label {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+    /* Letter chip */
+    .opt-letter {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.5rem;
+      height: 1.5rem;
+      border-radius: 50%;
+      border: 1.5px solid var(--border);
+      font-size: .75rem;
+      font-weight: 800;
       flex-shrink: 0;
-      accent-color: var(--green);
-      width: 1rem;
-      height: 1rem;
+      color: var(--muted);
+      background: var(--surface-alt);
+      margin-top: .05rem;
     }
-    .options-list li label.selected-correct {
-      border-color: #00843D;
-      background: #d1fae5;
-    }
-    .options-list li label.selected-wrong {
-      border-color: #dc2626;
-      background: #fee2e2;
-    }
-    .options-list li label.show-correct {
-      border-color: #00843D;
-      background: #d1fae5;
+    .options-list input[type="radio"]:checked + .option-label .opt-letter {
+      border-color: var(--lavender);
+      color: var(--lavender);
+      background: #fff;
     }
 
-    .sample-label {
-      font-size: .7rem;
+    /* Post-submit feedback states */
+    .option-label.state-correct {
+      border-color: var(--correct-border) !important;
+      background: var(--correct-bg) !important;
+      box-shadow: none !important;
+    }
+    .option-label.state-correct .opt-letter {
+      border-color: var(--correct-border);
+      color: var(--correct-fg);
+      background: #fff;
+    }
+    .option-label.state-wrong {
+      border-color: var(--wrong-border) !important;
+      background: var(--wrong-bg) !important;
+      box-shadow: none !important;
+    }
+    .option-label.state-wrong .opt-letter {
+      border-color: var(--wrong-border);
+      color: var(--wrong-fg);
+      background: #fff;
+    }
+    /* Icon symbol next to letter for color-independent feedback */
+    .opt-icon {
+      display: none;
+      font-size: .85rem;
+      margin-left: .15rem;
+    }
+    .state-correct .opt-icon { display: inline; }
+    .state-wrong   .opt-icon { display: inline; }
+
+    /* Submit button */
+    .btn-submit {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: .75rem 1rem;
+      background: var(--green);
+      color: #fff;
+      font-size: .97rem;
+      font-weight: 700;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      min-height: 48px;
+      transition: background .15s;
+    }
+    .btn-submit:hover { background: var(--green-mid); }
+    .btn-submit:disabled { opacity: .38; cursor: default; }
+
+    /* Answer feedback block */
+    .answer-feedback {
+      display: none;
+      margin-top: .9rem;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+    .answer-feedback.visible { display: block; }
+    .feedback-banner {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .6rem .85rem;
+      font-size: .9rem;
+      font-weight: 700;
+    }
+    .feedback-banner.correct { background: var(--correct-bg); color: var(--correct-fg); border: 1px solid var(--correct-border); border-radius: var(--radius-sm) var(--radius-sm) 0 0; }
+    .feedback-banner.wrong   { background: var(--wrong-bg);   color: var(--wrong-fg);   border: 1px solid var(--wrong-border);  border-radius: var(--radius-sm) var(--radius-sm) 0 0; }
+    .feedback-body {
+      padding: .7rem .85rem;
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+      background: var(--surface);
+    }
+    .feedback-explanation {
+      font-size: .9rem;
+      line-height: 1.6;
+      color: var(--text-mid);
+      margin-bottom: .6rem;
+    }
+    .source-quote {
+      border-left: 3px solid var(--green-mid);
+      padding: .4rem .65rem;
+      background: var(--green-lt);
+      border-radius: 0 6px 6px 0;
+      font-size: .8rem;
+      color: var(--muted);
+    }
+    .source-quote__label {
+      font-size: .66rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--green-mid);
+      display: block;
+      margin-bottom: .15rem;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       SHARED SECTION FOOTER (sample content notice)
+       ══════════════════════════════════════════════════════════ */
+    .sample-notice {
+      display: none;
+      align-items: center;
+      gap: .4rem;
+      margin-top: .9rem;
+      padding: .5rem .7rem;
+      background: var(--gold-lt);
+      border: 1px solid #f5d78e;
+      border-radius: var(--radius-sm);
+      font-size: .78rem;
+      color: #7a5500;
+    }
+    .sample-notice.visible { display: flex; }
+    .sample-notice__icon { font-size: .9rem; flex-shrink: 0; }
+
+    /* ══════════════════════════════════════════════════════════
+       HELP PANEL (bottom of page)
+       ══════════════════════════════════════════════════════════ */
+    .help-section {
+      padding: 1rem 1rem 0;
+      border-top: 1px solid var(--border);
+      margin-top: 1.5rem;
+    }
+    .help-section__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: .4rem;
+    }
+    .help-section__title {
+      font-size: .78rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: .07em;
-      color: var(--gold);
-      background: #fff8e7;
-      border: 1px solid #f0a500;
-      border-radius: 999px;
-      padding: .15rem .5rem;
-      margin-bottom: .6rem;
-      display: inline-block;
+      color: var(--muted);
     }
-
-    /* ── Answer / explanation ────────────────────────────────── */
-    #answer-reveal {
-      display: none;
-    }
-    #answer-reveal.visible {
-      display: block;
-    }
-    .answer-result {
-      font-size: 1rem;
-      font-weight: 700;
-      padding: .5rem .75rem;
-      border-radius: 6px;
-      margin-bottom: .6rem;
-    }
-    .answer-result--correct { background: #d1fae5; color: #065f46; }
-    .answer-result--wrong   { background: #fee2e2; color: #991b1b; }
-    .answer-result--reveal  { background: #e0f2fe; color: #0c4a6e; }
-    .explanation-text {
-      font-size: .9rem;
-      line-height: 1.65;
-    }
-
-    /* ── Help component ──────────────────────────────────────── */
-    .help-list {
-      display: flex;
-      flex-direction: column;
-      gap: .6rem;
-    }
-    .help-card {
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: .7rem .9rem;
-    }
-    .help-card__name  { font-weight: 700; font-size: .95rem; }
-    .help-card__role  { font-size: .8rem; color: var(--muted); margin-bottom: .3rem; }
-    .help-card__link  { font-size: .85rem; color: var(--green); text-decoration: none; }
-    .help-card__link:hover { text-decoration: underline; }
-    .help-card__hours { font-size: .78rem; color: var(--muted); margin-top: .15rem; }
-    .help-toggle-btn {
-      background: none;
-      border: none;
-      color: var(--green);
-      font-size: .88rem;
-      font-weight: 600;
-      cursor: pointer;
-      padding: 0;
+    .btn-toggle {
+      background: none; border: none;
+      font-size: .82rem; font-weight: 600;
+      color: var(--green); cursor: pointer;
       text-decoration: underline;
       text-underline-offset: 2px;
+      padding: 0;
     }
+    .help-cards {
+      display: flex;
+      flex-direction: column;
+      gap: .55rem;
+      margin-top: .6rem;
+    }
+    .help-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: .7rem .85rem;
+    }
+    .help-card__name  { font-weight: 700; font-size: .9rem; }
+    .help-card__role  { font-size: .78rem; color: var(--muted); margin-bottom: .25rem; }
+    .help-card__link  { font-size: .82rem; color: var(--green); text-decoration: none; }
+    .help-card__link:hover { text-decoration: underline; }
+    .help-card__hours { font-size: .75rem; color: var(--muted); margin-top: .12rem; }
 
-    /* ── Spinner ─────────────────────────────────────────────── */
+    /* ══════════════════════════════════════════════════════════
+       SPINNER
+       ══════════════════════════════════════════════════════════ */
     .spinner {
       display: inline-block;
       width: 1rem; height: 1rem;
-      border: 2px solid #c8e6c9;
+      border: 2px solid #c5dece;
       border-top-color: var(--green);
       border-radius: 50%;
       animation: spin .6s linear infinite;
@@ -319,28 +624,14 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Hidden utility ──────────────────────────────────────── */
     .hidden { display: none !important; }
 
-    /* ── Skip-to-content (a11y) ──────────────────────────────── */
-    .skip-link {
-      position: absolute;
-      top: -99px;
-      left: 0;
-      background: var(--focus);
-      color: #fff;
-      padding: .4rem .8rem;
-      border-radius: 0 0 6px 6px;
-      font-size: .9rem;
-      font-weight: 600;
-      z-index: 100;
-      text-decoration: none;
-    }
-    .skip-link:focus { top: 0; }
-
-    /* ── Responsive tweaks ───────────────────────────────────── */
-    @media (min-width: 420px) {
-      .section { margin-left: 1rem; margin-right: 1rem; }
+    /* ══════════════════════════════════════════════════════════
+       RESPONSIVE — tighten at very narrow widths
+       ══════════════════════════════════════════════════════════ */
+    @media (max-width: 360px) {
+      .tab-btn      { font-size: .75rem; padding: .55rem .3rem; }
+      .header__app-name { font-size: 1rem; }
     }
   </style>
 </head>
@@ -350,77 +641,96 @@
 
 <div class="app-shell">
 
-  <!-- ── Top bar ───────────────────────────────────────────── -->
-  <header class="topbar" role="banner">
-    <span class="topbar__logo">📚 Ivy Tech 2030</span>
-    <span class="topbar__course" id="course-label">BIOL 101</span>
-    <span class="topbar__mode-badge" id="sample-mode-badge" aria-live="polite">⚠ Sample Mode</span>
+  <!-- ══════════════════════════════════════════════════════════
+       HEADER
+       ══════════════════════════════════════════════════════════ -->
+  <header class="header" role="banner">
+    <div class="header__row1">
+      <div class="header__brand">
+        <span class="header__app-name">Study Shift</span>
+        <span class="header__course" id="course-label">BIOL 101</span>
+      </div>
+      <div class="header__right">
+        <span class="sample-badge" id="sample-mode-badge" aria-live="polite">⚠ Sample content</span>
+        <button class="btn-help" id="get-help-btn" type="button"
+                aria-expanded="false" aria-controls="help-section-body">
+          Get help
+        </button>
+      </div>
+    </div>
   </header>
 
   <main id="main-content">
 
-    <!-- ════════════════════════════════════════════════════════
-         COMPONENT 1: Material Selector
-         ════════════════════════════════════════════════════════ -->
-    <section class="section" id="selector-section" aria-labelledby="selector-title">
-      <div class="section__title" id="selector-title">Select Study Material</div>
+    <!-- ══════════════════════════════════════════════════════
+         SECTION 1 — Material picker
+         ══════════════════════════════════════════════════════ -->
+    <section class="picker-section" aria-labelledby="picker-label">
+      <span class="picker-label" id="picker-label">Choose your material</span>
 
-      <label for="material-select" class="hidden">Choose a material</label>
-      <select id="material-select" aria-describedby="material-meta-desc">
-        <!-- populated by JS -->
-      </select>
-
-      <div class="material-meta" id="material-meta-desc" aria-live="polite">
-        <!-- populated by JS -->
+      <div class="material-list" id="material-list" role="radiogroup"
+           aria-labelledby="picker-label">
+        <!-- populated by JS: renderMaterialCards() -->
       </div>
 
-      <button class="btn btn--primary" id="study-btn" type="button">
-        Study This Material
+      <button class="btn-study" id="study-btn" type="button" disabled>
+        Start studying
       </button>
     </section>
 
-    <!-- ════════════════════════════════════════════════════════
-         COMPONENT 2: Summary
-         ════════════════════════════════════════════════════════ -->
-    <section class="section hidden" id="summary-section" aria-labelledby="summary-title" aria-live="polite">
-      <div class="section__title" id="summary-title">Summary</div>
-      <div id="summary-content">
-        <!-- populated by renderSummary() -->
+    <!-- ══════════════════════════════════════════════════════
+         SECTION 2 — Study area (tabs)
+         ══════════════════════════════════════════════════════ -->
+    <section class="study-area hidden" id="study-area" aria-labelledby="study-title-text">
+
+      <!-- Material title strip -->
+      <div class="study-title-bar">
+        <span class="study-title-bar__id" id="study-material-id"></span>
+        <span class="study-title-bar__title" id="study-title-text"></span>
       </div>
-      <button class="btn btn--outline hidden" id="practice-btn" type="button">
-        Answer a Practice Question →
-      </button>
+
+      <!-- Tab bar -->
+      <div class="tab-bar" role="tablist" aria-label="Study views">
+        <button class="tab-btn" role="tab" id="tab-review"   aria-selected="true"  aria-controls="panel-review"   type="button">Quick review</button>
+        <button class="tab-btn" role="tab" id="tab-terms"    aria-selected="false" aria-controls="panel-terms"    type="button">Key terms</button>
+        <button class="tab-btn" role="tab" id="tab-practice" aria-selected="false" aria-controls="panel-practice" type="button">Practice</button>
+      </div>
+
+      <!-- Panel: Quick review -->
+      <div class="tab-panel active" role="tabpanel" id="panel-review" aria-labelledby="tab-review" tabindex="0">
+        <div id="review-content">
+          <!-- populated by renderReview() -->
+        </div>
+      </div>
+
+      <!-- Panel: Key terms -->
+      <div class="tab-panel" role="tabpanel" id="panel-terms" aria-labelledby="tab-terms" tabindex="0">
+        <div id="terms-content">
+          <!-- populated by renderTerms() -->
+        </div>
+      </div>
+
+      <!-- Panel: Practice -->
+      <div class="tab-panel" role="tabpanel" id="panel-practice" aria-labelledby="tab-practice" tabindex="0">
+        <div id="practice-content">
+          <!-- populated by renderPractice() -->
+        </div>
+      </div>
+
     </section>
 
-    <!-- ════════════════════════════════════════════════════════
-         COMPONENT 3: Practice Question
-         ════════════════════════════════════════════════════════ -->
-    <section class="section hidden" id="practice-section" aria-labelledby="practice-title" aria-live="polite">
-      <div class="section__title" id="practice-title">Practice Question</div>
-      <div id="practice-content">
-        <!-- populated by renderPractice() -->
+    <!-- ══════════════════════════════════════════════════════
+         SECTION 3 — Help (always visible at bottom)
+         ══════════════════════════════════════════════════════ -->
+    <section class="help-section" id="help-section" aria-labelledby="help-title">
+      <div class="help-section__header">
+        <span class="help-section__title" id="help-title">Need a person?</span>
+        <button class="btn-toggle" id="help-toggle-btn"
+                type="button" aria-expanded="false" aria-controls="help-section-body">
+          Show ▾
+        </button>
       </div>
-    </section>
-
-    <!-- ════════════════════════════════════════════════════════
-         COMPONENT 4: Answer & Explanation
-         (embedded inside practice-section, controlled by renderAnswer())
-         ════════════════════════════════════════════════════════ -->
-
-    <!-- ════════════════════════════════════════════════════════
-         COMPONENT 5: Human Help
-         ════════════════════════════════════════════════════════ -->
-    <section class="section" id="help-section" aria-labelledby="help-title">
-      <div class="section__title" id="help-title">Need Help?</div>
-      <p style="font-size:.88rem;color:var(--muted);margin-bottom:.5rem;">
-        AI tools are aids, not authorities. Reach a person any time:
-      </p>
-      <button class="help-toggle-btn" id="help-toggle-btn"
-              aria-expanded="false" aria-controls="help-directory"
-              type="button">
-        Show help directory ▾
-      </button>
-      <div id="help-directory" class="help-list hidden" role="list">
+      <div id="help-section-body" class="help-cards hidden">
         <!-- populated by renderHelp() -->
       </div>
     </section>
@@ -428,79 +738,122 @@
   </main>
 </div><!-- /app-shell -->
 
-<!-- ── ES module: all logic lives here ──────────────────────── -->
+<!-- ══════════════════════════════════════════════════════════════
+     ES MODULE — all application logic
+     ══════════════════════════════════════════════════════════════ -->
 <script type="module">
-import { COURSE, MATERIALS, QUESTION_BANK, HELP_DIRECTORY } from './case_data.js';
+import { COURSE, MATERIALS, QUESTION_BANK, KEY_TERMS, HELP_DIRECTORY } from './case_data.js';
 
 /* ══════════════════════════════════════════════════════════════
-   STATE
+   GLOBAL STATE
    ══════════════════════════════════════════════════════════════ */
 const state = {
-  isSampleMode: false,   // true when AI unavailable
-  currentMaterial: null, // MATERIALS entry
-  currentQuestion: null, // QUESTION_BANK entry
-  answered: false,
-  selectedOption: null,  // "A"|"B"|"C"|"D"
+  isSampleMode:     false,
+  currentMaterial:  null,   // MATERIALS entry
+  currentQuestion:  null,   // QUESTION_BANK entry
+  quizAnswered:     false,
+  selectedOption:   null,   // "A"|"B"|"C"|"D"
 };
 
 /* ══════════════════════════════════════════════════════════════
-   AI STUB  — replace with real call when endpoint is available
-   Returns a promise that rejects to trigger sample mode.
+   AI STUB
+   Replace this body to wire a real endpoint, e.g.:
+     const res = await fetch('/api/generate', {
+       method: 'POST',
+       headers: { 'Content-Type': 'application/json' },
+       body: JSON.stringify({ prompt })
+     });
+     return res.json(); // expects { text: string }
    ══════════════════════════════════════════════════════════════ */
 async function callAI(prompt) {
-  // When a real AI backend is wired in, replace this function body:
-  //   const res = await fetch('/api/generate', { method:'POST', body: JSON.stringify({prompt}) });
-  //   return res.json();
-  throw new Error("AI service unavailable — using sample mode");
+  throw new Error("AI service unavailable — using sample content");
 }
 
 /* ══════════════════════════════════════════════════════════════
-   SAMPLE GENERATORS (fallback)
+   SAMPLE GENERATORS (fallback when AI unavailable)
    ══════════════════════════════════════════════════════════════ */
-function buildSampleSummary(material) {
-  const sentences = material.source_text.match(/[^.!?]+[.!?]+/g) || [];
-  const first = sentences.slice(0, 3).join(" ").trim();
-  const last  = sentences.slice(-2).join(" ").trim();
-  return first + (first !== last ? " … " + last : "");
+function buildSampleBullets(material) {
+  // Split source text into sentences; return first 5 as bullet strings
+  const raw = material.source_text.match(/[^.!?]+[.!?]+/g) || [];
+  return raw.slice(0, 5).map(s => s.trim()).filter(Boolean);
 }
 
 function pickSampleQuestion(materialId) {
   const pool = QUESTION_BANK[materialId];
   if (!pool || pool.length === 0) return null;
-  // cycle through questions if more than one
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
 /* ══════════════════════════════════════════════════════════════
-   COMPONENT 1 — Selector
+   HELPERS
    ══════════════════════════════════════════════════════════════ */
-function initSelector() {
-  const select = document.getElementById('material-select');
-  const metaDiv = document.getElementById('material-meta-desc');
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
 
-  // Filter to assigned materials only
-  const assigned = MATERIALS.filter(m => m.assigned_by_instructor);
+// Wrap recognized course terms in <span class="term-em"> inside a string.
+// Terms are sourced from KEY_TERMS for the current material.
+function highlightTerms(text, materialId) {
+  const terms = (KEY_TERMS[materialId] || []).map(t => t.term);
+  if (!terms.length) return escHtml(text);
+  // Sort longest first so multi-word terms match before substrings
+  const sorted = [...terms].sort((a, b) => b.length - a.length);
+  const pattern = new RegExp(`(${sorted.map(t =>
+    t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  ).join('|')})`, 'gi');
+  return escHtml(text).replace(
+    new RegExp(`(${sorted.map(t =>
+      escHtml(t).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    ).join('|')})`, 'gi'),
+    '<span class="term-em">$1</span>'
+  );
+}
 
-  assigned.forEach(m => {
-    const opt = document.createElement('option');
-    opt.value = m.id;
-    opt.textContent = `${m.id} — ${m.title}`;
-    select.appendChild(opt);
-  });
+function activateSampleMode() {
+  if (state.isSampleMode) return;
+  state.isSampleMode = true;
+  document.getElementById('sample-mode-badge').classList.add('visible');
+}
 
-  function updateMeta() {
-    const m = assigned.find(x => x.id === select.value);
+/* ══════════════════════════════════════════════════════════════
+   COMPONENT 1 — Material picker cards
+   ══════════════════════════════════════════════════════════════ */
+// Derive week number from material index among assigned items (W01, W02…)
+function weekLabel(index) {
+  return `Week ${String(index + 1).padStart(2, '0')}`;
+}
+
+function renderMaterialCards() {
+  const container = document.getElementById('material-list');
+  const assigned = MATERIALS.filter(m => m.assigned_by_instructor);  // M06/M10 excluded
+
+  container.innerHTML = assigned.map((m, i) => {
+    const typeClass  = m.type === 'reading' ? 'pill--reading' : 'pill--lecture';
+    const typeLabel  = m.type === 'reading' ? '📄 Reading' : '📝 Lecture Notes';
+    return `
+      <div class="material-card">
+        <input type="radio" name="material" id="mat-${m.id}" value="${m.id}"
+               aria-labelledby="mat-label-${m.id}" />
+        <label class="material-card__label" id="mat-label-${m.id}" for="mat-${m.id}">
+          <div class="material-card__meta">
+            <span class="pill pill--week">${weekLabel(i)}</span>
+            <span class="pill ${typeClass}">${typeLabel}</span>
+          </div>
+          <div class="material-card__title">${escHtml(m.title)}</div>
+        </label>
+      </div>
+    `;
+  }).join('');
+
+  // Enable Start button when a card is selected; track currentMaterial
+  container.addEventListener('change', e => {
+    if (e.target.name !== 'material') return;
+    const m = MATERIALS.find(x => x.id === e.target.value);
     state.currentMaterial = m;
-    metaDiv.innerHTML = m ? `
-      <span class="badge badge--${m.type === 'reading' ? 'reading' : 'lecture'}">
-        ${m.type === 'reading' ? '📄 Reading' : '📝 Lecture Notes'}
-      </span>
-      <span class="badge badge--assigned">✓ Assigned</span>
-    ` : '';
-  }
-
-  select.addEventListener('change', updateMeta);
-  updateMeta(); // prime on load
+    document.getElementById('study-btn').disabled = false;
+  });
 
   document.getElementById('study-btn').addEventListener('click', onStudyClick);
 }
@@ -509,189 +862,261 @@ function onStudyClick() {
   const m = state.currentMaterial;
   if (!m) return;
 
-  // Reset downstream state
-  state.answered = false;
-  state.selectedOption = null;
-  state.currentQuestion = null;
+  // Reset quiz state whenever a new material is selected
+  resetQuizState();
 
-  document.getElementById('summary-section').classList.remove('hidden');
-  document.getElementById('practice-section').classList.add('hidden');
-  document.getElementById('summary-content').innerHTML =
-    `<span class="spinner" aria-hidden="true"></span> Generating summary…`;
-  document.getElementById('practice-btn').classList.add('hidden');
-  document.getElementById('summary-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Update title strip
+  document.getElementById('study-material-id').textContent = m.id;
+  document.getElementById('study-title-text').textContent  = m.title;
 
-  generateSummary(m);
+  // Show study area, switch to Quick Review tab
+  document.getElementById('study-area').classList.remove('hidden');
+  switchTab('review');
+
+  // Render all three panels for this material
+  renderReview(m);
+  renderTerms(m);
+  renderPractice(m);
+
+  document.getElementById('study-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 /* ══════════════════════════════════════════════════════════════
-   COMPONENT 2 — Summary
+   TABS
    ══════════════════════════════════════════════════════════════ */
-async function generateSummary(material) {
-  let summaryText;
-  let usedSampleMode = false;
+function switchTab(name) {
+  ['review','terms','practice'].forEach(id => {
+    document.getElementById(`tab-${id}`).setAttribute('aria-selected', id === name ? 'true' : 'false');
+    document.getElementById(`panel-${id}`).classList.toggle('active', id === name);
+  });
+}
+
+function initTabs() {
+  ['review','terms','practice'].forEach(id => {
+    document.getElementById(`tab-${id}`).addEventListener('click', () => switchTab(id));
+  });
+  // Arrow-key keyboard navigation between tabs
+  document.querySelector('[role="tablist"]').addEventListener('keydown', e => {
+    const tabs = ['review','terms','practice'];
+    const current = tabs.findIndex(id =>
+      document.getElementById(`tab-${id}`).getAttribute('aria-selected') === 'true'
+    );
+    let next = -1;
+    if (e.key === 'ArrowRight') next = (current + 1) % tabs.length;
+    if (e.key === 'ArrowLeft')  next = (current + 2) % tabs.length;
+    if (next >= 0) {
+      e.preventDefault();
+      switchTab(tabs[next]);
+      document.getElementById(`tab-${tabs[next]}`).focus();
+    }
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   COMPONENT 2 — Quick Review (bullets + source excerpt)
+   ══════════════════════════════════════════════════════════════ */
+async function renderReview(material) {
+  const container = document.getElementById('review-content');
+  container.innerHTML = `<span class="spinner" aria-hidden="true"></span> Building review…`;
+
+  let bullets;
+  let usedSample = false;
 
   try {
     const result = await callAI(
-      `Summarize the following biology study material in 3–4 sentences for a college student. ` +
-      `Focus on the key concepts. Material: "${material.source_text}"`
+      `Summarize the following biology study material as 4-5 short bullets for a college student. ` +
+      `Keep important course terms. Material: "${material.source_text}"`
     );
-    summaryText = result.text;
+    // Expect result.text to be newline-separated bullet strings
+    bullets = result.text.split('\n').map(l => l.replace(/^[-•*]\s*/, '').trim()).filter(Boolean);
   } catch {
-    summaryText = buildSampleSummary(material);
-    usedSampleMode = true;
+    bullets = buildSampleBullets(material);
+    usedSample = true;
   }
 
-  if (usedSampleMode) activateSampleMode();
+  if (usedSample) activateSampleMode();
 
-  renderSummary(material, summaryText, usedSampleMode);
-}
+  const bulletHTML = bullets.map(b =>
+    `<li>${highlightTerms(b, material.id)}</li>`
+  ).join('');
 
-function renderSummary(material, summaryText, isSample) {
-  const container = document.getElementById('summary-content');
   container.innerHTML = `
-    <p class="material-id-line">Material: <strong>${material.id}</strong> · ${material.title}</p>
-    ${isSample ? '<span class="sample-label">Sample summary</span>' : ''}
-    <p class="summary-body">${escHtml(summaryText)}</p>
-    <div class="source-excerpt">
-      <strong>Source excerpt — ${escHtml(material.id)}</strong>
+    <ul class="review-bullets" aria-label="Quick review bullets">
+      ${bulletHTML}
+    </ul>
+    <div class="source-quote">
+      <span class="source-quote__label">From ${escHtml(material.id)}</span>
       ${escHtml(material.excerpt)}
     </div>
+    ${usedSample ? sampleNoticeHTML('Quick review built from source text') : ''}
   `;
-
-  const practiceBtn = document.getElementById('practice-btn');
-  practiceBtn.classList.remove('hidden');
-  practiceBtn.onclick = () => onPracticeClick(material);
 }
 
 /* ══════════════════════════════════════════════════════════════
-   COMPONENT 3 — Practice Question
+   COMPONENT 3 — Key Terms
    ══════════════════════════════════════════════════════════════ */
-function onPracticeClick(material) {
-  state.answered = false;
-  state.selectedOption = null;
+function renderTerms(material) {
+  const container = document.getElementById('terms-content');
+  const terms = KEY_TERMS[material.id] || [];
+  const usedSample = true; // key_terms.csv not yet on disk — always sample
 
-  document.getElementById('practice-section').classList.remove('hidden');
-  document.getElementById('practice-content').innerHTML =
-    `<span class="spinner" aria-hidden="true"></span> Loading question…`;
-  document.getElementById('practice-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  activateSampleMode();
 
-  generatePractice(material);
-}
-
-async function generatePractice(material) {
-  let question;
-  let usedSampleMode = false;
-
-  try {
-    // In a real implementation, the AI would generate a question from source_text.
-    // We stub this to always go to sample mode for now.
-    await callAI(`Generate one multiple-choice question from: "${material.source_text}"`);
-  } catch {
-    question = pickSampleQuestion(material.id);
-    usedSampleMode = true;
-  }
-
-  if (usedSampleMode) activateSampleMode();
-
-  if (!question) {
-    document.getElementById('practice-content').innerHTML =
-      `<p style="color:var(--muted);font-size:.9rem;">No practice question available for this material yet.</p>`;
+  if (!terms.length) {
+    container.innerHTML = `<p style="font-size:.88rem;color:var(--muted);">No key terms loaded for this material yet.</p>`;
     return;
   }
 
-  state.currentQuestion = question;
-  renderPractice(material, question, usedSampleMode);
-}
-
-function renderPractice(material, q, isSample) {
-  const optLetters = ['A','B','C','D'];
-  const optionsHTML = q.options.map((opt, i) => `
-    <li role="listitem">
-      <label id="opt-label-${optLetters[i]}">
-        <input type="radio" name="practice-option" value="${optLetters[i]}"
-               aria-label="Option ${optLetters[i]}: ${escHtml(opt)}" />
-        <span><strong>${optLetters[i]}.</strong> ${escHtml(opt)}</span>
-      </label>
-    </li>
+  const cardsHTML = terms.map(t => `
+    <div class="term-card">
+      <div class="term-card__term">${escHtml(t.term)}</div>
+      <div class="term-card__def">${escHtml(t.definition)}</div>
+    </div>
   `).join('');
 
-  document.getElementById('practice-content').innerHTML = `
-    <p class="material-id-line">Material: <strong>${material.id}</strong> · ${material.title}</p>
-    ${isSample ? '<span class="sample-label">Sample practice question</span>' : ''}
-    <p class="practice-question">${escHtml(q.question)}</p>
-    <ul class="options-list" role="list">
+  container.innerHTML = `
+    <div class="terms-list" aria-label="Key terms">
+      ${cardsHTML}
+    </div>
+    ${sampleNoticeHTML('Terms from built-in glossary · will update from data/key_terms.csv')}
+  `;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   COMPONENT 4 — Practice (pick → submit → feedback)
+   ══════════════════════════════════════════════════════════════ */
+async function renderPractice(material) {
+  const container = document.getElementById('practice-content');
+  container.innerHTML = `<span class="spinner" aria-hidden="true"></span> Loading question…`;
+
+  let q;
+  let usedSample = false;
+
+  try {
+    // AI-generated question path (will also set usedSample=false)
+    await callAI(`Generate one multiple-choice question from: "${material.source_text}"`);
+    // If AI returns, parse result into q — not reached today
+  } catch {
+    q = pickSampleQuestion(material.id);
+    usedSample = true;
+  }
+
+  if (usedSample) activateSampleMode();
+
+  if (!q) {
+    container.innerHTML = `<p style="font-size:.88rem;color:var(--muted);">No practice question available for this material yet.</p>`;
+    return;
+  }
+
+  state.currentQuestion = q;
+  state.quizAnswered     = false;
+  state.selectedOption   = null;
+
+  _renderPracticeUI(material, q, usedSample);
+}
+
+function _renderPracticeUI(material, q, isSample) {
+  const optLetters = ['A','B','C','D'];
+  const container  = document.getElementById('practice-content');
+
+  const optionsHTML = q.options.map((opt, i) => {
+    const letter = optLetters[i];
+    return `
+      <li>
+        <input type="radio" name="practice-opt" id="opt-${letter}" value="${letter}"
+               aria-label="Option ${letter}: ${escHtml(opt)}" />
+        <label class="option-label" for="opt-${letter}">
+          <span class="opt-letter" aria-hidden="true">${letter}<span class="opt-icon"></span></span>
+          <span>${escHtml(opt)}</span>
+        </label>
+      </li>
+    `;
+  }).join('');
+
+  container.innerHTML = `
+    <p class="material-id-line" style="font-size:.7rem;color:var(--muted);margin-bottom:.6rem;">
+      ${escHtml(material.id)} · ${escHtml(material.title)}
+    </p>
+    ${isSample ? `<div style="margin-bottom:.65rem;">${sampleQuestionBadgeHTML()}</div>` : ''}
+    <p class="practice-q" id="practice-question-text">${escHtml(q.question)}</p>
+    <ul class="options-list" role="list" aria-labelledby="practice-question-text">
       ${optionsHTML}
     </ul>
-    <button class="btn btn--answer" id="reveal-btn" type="button" disabled>
-      Reveal Answer
+    <button class="btn-submit" id="submit-btn" type="button" disabled>
+      Submit answer
     </button>
-    <div id="answer-reveal" aria-live="polite"></div>
+    <div class="answer-feedback" id="answer-feedback" aria-live="polite"></div>
+    ${isSample ? sampleNoticeHTML('Sample question from question bank (not AI-generated)') : ''}
   `;
 
-  // Enable reveal button once an option is selected
-  document.querySelectorAll('input[name="practice-option"]').forEach(radio => {
+  // Enable submit when an option is chosen
+  container.querySelectorAll('input[name="practice-opt"]').forEach(radio => {
     radio.addEventListener('change', () => {
       state.selectedOption = radio.value;
-      document.getElementById('reveal-btn').disabled = false;
+      document.getElementById('submit-btn').disabled = false;
     });
   });
 
-  document.getElementById('reveal-btn').addEventListener('click', () => {
-    revealAnswer(material, q);
-  });
+  document.getElementById('submit-btn').addEventListener('click', () => revealAnswer(material, q));
 }
 
 /* ══════════════════════════════════════════════════════════════
-   COMPONENT 4 — Answer Reveal & Explanation
+   COMPONENT 5 — Answer reveal
+   Idempotent: second click does nothing.
    ══════════════════════════════════════════════════════════════ */
 function revealAnswer(material, q) {
-  if (state.answered) return;
-  state.answered = true;
+  if (state.quizAnswered) return;
+  state.quizAnswered = true;
 
-  const selected = state.selectedOption;
-  const isCorrect = selected === q.answer;
+  const selected   = state.selectedOption;
+  const isCorrect  = selected === q.answer;
   const optLetters = ['A','B','C','D'];
 
-  // Style all option labels
+  // Apply state classes to all labels; icons give color-independent feedback
   optLetters.forEach(letter => {
-    const label = document.getElementById(`opt-label-${letter}`);
+    const label = document.querySelector(`label[for="opt-${letter}"]`);
+    const icon  = label && label.querySelector('.opt-icon');
+    const input = document.getElementById(`opt-${letter}`);
     if (!label) return;
     if (letter === q.answer) {
-      label.classList.add('show-correct');
+      label.classList.add('state-correct');
+      if (icon) icon.textContent = ' ✓';
     } else if (letter === selected && !isCorrect) {
-      label.classList.add('selected-wrong');
+      label.classList.add('state-wrong');
+      if (icon) icon.textContent = ' ✗';
     }
-    label.querySelector('input').disabled = true;
+    input.disabled = true;
   });
 
-  document.getElementById('reveal-btn').disabled = true;
+  document.getElementById('submit-btn').disabled = true;
 
-  const resultClass = isCorrect ? 'answer-result--correct' : 'answer-result--wrong';
-  const resultText  = isCorrect
+  const bannerClass = isCorrect ? 'correct' : 'wrong';
+  const bannerText  = isCorrect
     ? '✓ Correct!'
-    : `✗ Not quite — the correct answer is ${q.answer}.`;
+    : `✗ Not quite — the right answer is ${q.answer}.`;
 
-  const revealDiv = document.getElementById('answer-reveal');
-  revealDiv.innerHTML = `
-    <div class="answer-result ${resultClass}" role="alert">${resultText}</div>
-    <p class="explanation-text">${escHtml(q.explanation)}</p>
-    <div class="source-excerpt">
-      <strong>Source — ${escHtml(material.id)}</strong>
-      ${escHtml(q.source_excerpt)}
+  const feedbackEl = document.getElementById('answer-feedback');
+  feedbackEl.innerHTML = `
+    <div class="feedback-banner ${bannerClass}" role="alert">${bannerText}</div>
+    <div class="feedback-body">
+      <p class="feedback-explanation">${escHtml(q.explanation)}</p>
+      <div class="source-quote">
+        <span class="source-quote__label">Source — ${escHtml(material.id)}</span>
+        ${escHtml(q.source_excerpt)}
+      </div>
     </div>
   `;
-  revealDiv.classList.add('visible');
-  revealDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  feedbackEl.classList.add('visible');
+  feedbackEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 /* ══════════════════════════════════════════════════════════════
-   COMPONENT 5 — Human Help
+   COMPONENT 6 — Help directory
    ══════════════════════════════════════════════════════════════ */
 function renderHelp() {
-  const dir = document.getElementById('help-directory');
-  dir.innerHTML = HELP_DIRECTORY.map(h => `
-    <div class="help-card" role="listitem">
+  const body = document.getElementById('help-section-body');
+  body.innerHTML = HELP_DIRECTORY.map(h => `
+    <div class="help-card">
       <div class="help-card__name">${escHtml(h.name)}</div>
       <div class="help-card__role">${escHtml(h.role)}</div>
       <a class="help-card__link" href="mailto:${escHtml(h.contact)}">${escHtml(h.contact)}</a>
@@ -700,45 +1125,72 @@ function renderHelp() {
     </div>
   `).join('');
 
-  document.getElementById('help-toggle-btn').addEventListener('click', () => {
-    const isHidden = dir.classList.toggle('hidden');
-    document.getElementById('help-toggle-btn').setAttribute('aria-expanded', String(!isHidden));
-    document.getElementById('help-toggle-btn').textContent = isHidden
-      ? 'Show help directory ▾'
-      : 'Hide help directory ▴';
+  // Both the top-bar "Get help" button and the section toggle open the same list
+  function toggleHelp(btn) {
+    const expanded = body.classList.toggle('hidden');
+    const isOpen   = !expanded;
+    btn.setAttribute('aria-expanded', String(isOpen));
+    btn.textContent = isOpen
+      ? (btn.id === 'help-toggle-btn' ? 'Hide ▴' : 'Get help')
+      : (btn.id === 'help-toggle-btn' ? 'Show ▾' : 'Get help');
+    if (isOpen && btn.id === 'get-help-btn') {
+      document.getElementById('help-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  document.getElementById('help-toggle-btn').addEventListener('click', e => toggleHelp(e.currentTarget));
+  document.getElementById('get-help-btn').addEventListener('click', e => {
+    // Always open (never toggle from header)
+    if (body.classList.contains('hidden')) body.classList.remove('hidden');
+    document.getElementById('help-toggle-btn').textContent = 'Hide ▴';
+    document.getElementById('help-toggle-btn').setAttribute('aria-expanded', 'true');
+    document.getElementById('help-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 }
 
 /* ══════════════════════════════════════════════════════════════
-   SAMPLE MODE INDICATOR
+   QUIZ RESET — called when material changes
    ══════════════════════════════════════════════════════════════ */
-function activateSampleMode() {
-  if (state.isSampleMode) return;
-  state.isSampleMode = true;
-  document.getElementById('sample-mode-badge').classList.add('visible');
+function resetQuizState() {
+  state.quizAnswered   = false;
+  state.selectedOption = null;
+  state.currentQuestion = null;
+  // The practice-content div is re-rendered by renderPractice(), which
+  // creates fresh radio buttons and a fresh feedback block, so stale
+  // answer state cannot persist under a new material.
 }
 
 /* ══════════════════════════════════════════════════════════════
-   HELPERS
+   SMALL HTML BUILDERS
    ══════════════════════════════════════════════════════════════ */
-function escHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+function sampleNoticeHTML(msg) {
+  return `
+    <div class="sample-notice visible" role="note">
+      <span class="sample-notice__icon" aria-hidden="true">ℹ</span>
+      <span>Sample content — ${escHtml(msg)}</span>
+    </div>
+  `;
+}
+
+function sampleQuestionBadgeHTML() {
+  return `<span style="
+    display:inline-block;font-size:.68rem;font-weight:800;
+    text-transform:uppercase;letter-spacing:.05em;
+    background:var(--gold-lt);border:1px solid #f5d78e;
+    color:#7a5500;border-radius:999px;padding:.12rem .5rem;">
+    Sample practice question
+  </span>`;
 }
 
 /* ══════════════════════════════════════════════════════════════
    BOOT
    ══════════════════════════════════════════════════════════════ */
 (function boot() {
-  // Fill top bar with course info
   document.getElementById('course-label').textContent =
     `${COURSE.id} · ${COURSE.section}`;
 
-  initSelector();
+  renderMaterialCards();
+  initTabs();
   renderHelp();
 })();
 </script>

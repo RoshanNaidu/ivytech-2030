@@ -296,4 +296,82 @@ const HELP_DIRECTORY = [
   }
 ];
 
-export { COURSE, MATERIALS, QUESTION_BANK, HELP_DIRECTORY };
+/**
+ * KEY_TERMS — keyed by material ID.
+ * Sourced from material source_text (invented examples; will be replaced by
+ * data/key_terms.csv when that file is provided on challenge day).
+ * Each entry: { term: string, definition: string }
+ *
+ * NOTE: data/key_terms.csv schema (when available):
+ *   material_id, term, definition
+ * Loader pattern matches app/lib/data.py's read_any() — drop CSV in data/
+ * and update this object (or fetch it at runtime).
+ */
+const KEY_TERMS = {
+  M01: [
+    { term: "Hypothesis",        definition: "A testable, falsifiable explanation for an observation, proposed before experimentation." },
+    { term: "Independent variable", definition: "The single factor deliberately changed in a controlled experiment." },
+    { term: "Scientific theory",  definition: "A well-substantiated explanation supported by repeated, peer-reviewed experiments — the highest level of scientific understanding." },
+    { term: "Peer review",        definition: "Evaluation of scientific work by other experts before publication, protecting against bias and error." }
+  ],
+  M02: [
+    { term: "Prokaryotic cell",   definition: "A cell without a membrane-bound nucleus; DNA floats freely in the cytoplasm. Bacteria and archaea are prokaryotes." },
+    { term: "Eukaryotic cell",    definition: "A cell with a membrane-bound nucleus housing its genetic material. Found in plants, animals, fungi, and protists." },
+    { term: "Mitochondria",       definition: "Organelle that produces ATP via cellular respiration; often called the 'powerhouse of the cell'." },
+    { term: "Phospholipid bilayer", definition: "The two-layered structure of the plasma membrane that controls what enters and exits a cell (selective permeability)." },
+    { term: "Golgi apparatus",    definition: "Organelle that processes and packages proteins for secretion or use within the cell." }
+  ],
+  M03: [
+    { term: "Mitosis",            definition: "Cell division producing two genetically identical daughter cells; used for growth and repair." },
+    { term: "Meiosis",            definition: "Cell division producing four genetically unique haploid cells; used for sexual reproduction." },
+    { term: "Prophase",           definition: "First stage of mitosis: chromosomes condense and the spindle begins to form." },
+    { term: "Metaphase",          definition: "Stage of mitosis where chromosomes align at the cell's equatorial plate." },
+    { term: "Crossing over",      definition: "Exchange of chromosome segments between homologous chromosomes during Meiosis I, increasing genetic diversity." },
+    { term: "Cytokinesis",        definition: "Division of the cytoplasm following nuclear division, completing cell separation." }
+  ],
+  M04: [
+    { term: "Photosynthesis",     definition: "The process by which chloroplasts convert light energy into chemical energy (glucose). Equation: 6CO₂ + 6H₂O + light → C₆H₁₂O₆ + 6O₂." },
+    { term: "Calvin cycle",       definition: "The light-independent reactions in the stroma of the chloroplast that use ATP and NADPH to fix CO₂ into glucose." },
+    { term: "Cellular respiration", definition: "The process of oxidizing glucose to release ATP; occurs via glycolysis, the Krebs cycle, and oxidative phosphorylation." },
+    { term: "ATP",                definition: "Adenosine triphosphate — the primary energy currency of cells, produced by mitochondria." },
+    { term: "Thylakoid membrane", definition: "The membrane inside a chloroplast where the light-dependent reactions of photosynthesis occur." }
+  ],
+  M05: [
+    { term: "DNA",                definition: "Deoxyribonucleic acid — a double helix polymer of nucleotides that carries genetic information." },
+    { term: "Nucleotide",         definition: "The monomer of DNA, consisting of a deoxyribose sugar, a phosphate group, and one of four nitrogenous bases (A, T, G, or C)." },
+    { term: "Base pairing",       definition: "Specific hydrogen-bond pairing: adenine (A) with thymine (T), guanine (G) with cytosine (C)." },
+    { term: "Semiconservative replication", definition: "Each new DNA molecule contains one original strand and one newly synthesized strand." },
+    { term: "DNA polymerase",     definition: "Enzyme that synthesizes new DNA strands in the 5'→3' direction and proofreads for errors." },
+    { term: "Helicase",           definition: "Enzyme that unwinds the DNA double helix at the replication fork during DNA replication." }
+  ],
+  M06: [
+    { term: "Population",         definition: "A group of individuals of the same species living in the same area." },
+    { term: "Carrying capacity",  definition: "The maximum population size an environment can sustain given its resources (symbolized K)." },
+    { term: "Ecological succession", definition: "Gradual change in a community over time, from pioneer species to a stable climax community." }
+  ],
+  M07: [
+    { term: "Natural selection",  definition: "The mechanism of evolution: individuals with advantageous traits survive and reproduce more, passing those traits on." },
+    { term: "Genetic drift",      definition: "Random changes in allele frequencies in a population, more pronounced in small populations." },
+    { term: "Speciation",         definition: "The formation of new species; can occur through geographic isolation (allopatric) or without it (sympatric)." }
+  ],
+  M08: [
+    { term: "Law of Segregation", definition: "Mendel's first law: allele pairs separate during gamete formation so each gamete carries one allele per gene." },
+    { term: "Law of Independent Assortment", definition: "Mendel's second law: genes on different chromosomes distribute independently during gamete formation." },
+    { term: "Dominant allele",    definition: "An allele whose phenotype is expressed even when only one copy is present (masks the recessive allele)." },
+    { term: "Punnett square",     definition: "A grid used to predict the probability of offspring genotypes from a genetic cross." }
+  ],
+  M09: [
+    { term: "Innate immunity",    definition: "Non-specific, immediate defense mechanisms including physical barriers and phagocytic cells." },
+    { term: "Adaptive immunity",  definition: "Specific immune response that develops immunological memory; involves B cells and T cells." },
+    { term: "Antibody",           definition: "A protein produced by B cells that binds to a specific antigen to neutralize or mark it for destruction." },
+    { term: "Vaccine",            definition: "A preparation that trains the immune system to recognize a pathogen, exploiting immunological memory." }
+  ],
+  M10: [
+    { term: "PCR",                definition: "Polymerase chain reaction — a technique to amplify a specific DNA sequence using repeated heating and cooling cycles." },
+    { term: "CRISPR-Cas9",        definition: "A precise gene-editing tool that uses a guide RNA to direct the Cas9 protein to cut a specific DNA sequence." },
+    { term: "Gel electrophoresis", definition: "A technique that separates DNA fragments by size using an electric field and a gel matrix." },
+    { term: "Genomics",           definition: "The large-scale study of all genes in an organism, including their functions and interactions." }
+  ]
+};
+
+export { COURSE, MATERIALS, QUESTION_BANK, KEY_TERMS, HELP_DIRECTORY };
