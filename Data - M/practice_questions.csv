@@ -1,0 +1,17 @@
+question_id,material_id,question,choices,answer,explanation
+Q01,M01,Which of these is NOT one of the shared characteristics of living things?,Made of cells|Uses energy|Can be seen without a microscope|Reproduces,Can be seen without a microscope,"Many living things, like bacteria, are too small to see without a microscope."
+Q02,M01,What is homeostasis?,Growing larger|Keeping a stable internal environment|Changing over generations|Making copies of DNA,Keeping a stable internal environment,"Homeostasis means keeping internal conditions, like temperature, stable."
+Q03,M02,"In an experiment, which variable does the scientist change on purpose?",Dependent variable|Independent variable|Control group|Constant,Independent variable,The independent variable is changed; the dependent variable is measured.
+Q04,M02,Why does an experiment include a control group?,To get results faster|To compare results to a group with no treatment|To change more variables|To prove the hypothesis,To compare results to a group with no treatment,The control group shows what happens without the treatment.
+Q05,M03,Why does water change temperature slowly?,It is a solvent|It has a high specific heat|It is nonpolar|It has no hydrogen bonds,It has a high specific heat,Hydrogen bonds give water a high specific heat.
+Q06,M04,Which macromolecule forms cell membranes?,Carbohydrates|Lipids|Proteins|Nucleic acids,Lipids,"Phospholipids, a kind of lipid, form cell membranes."
+Q07,M04,Proteins are made of chains of what?,Glucose|Fatty acids|Amino acids|Nucleotides,Amino acids,Amino acids are the monomers of proteins.
+Q08,M05,What do prokaryotic cells NOT have?,Ribosomes|A cell membrane|A nucleus|DNA,A nucleus,"Prokaryotes keep their DNA in the cytoplasm, not in a nucleus."
+Q09,M05,Which organelle releases energy from food?,Chloroplast|Mitochondrion|Golgi apparatus|Cell wall,Mitochondrion,Mitochondria release energy from food.
+Q10,M06,Who named cells after looking at cork?,Robert Hooke|Antonie van Leeuwenhoek|Charles Darwin|Gregor Mendel,Robert Hooke,Hooke saw small boxes in cork and called them cells.
+Q11,M07,Which process moves substances against a concentration gradient?,Diffusion|Osmosis|Facilitated diffusion|Active transport,Active transport,Active transport needs energy to move substances from low to high concentration.
+Q12,M07,Osmosis is the diffusion of what?,Sugar|Salt|Water|Oxygen,Water,Osmosis is the movement of water across a membrane.
+Q13,M08,What can happen to an enzyme at a very high temperature?,It speeds up forever|It denatures|It becomes a lipid|It makes more substrate,It denatures,Extreme heat changes the enzyme's shape so it stops working.
+Q14,M09,Where does photosynthesis happen?,Mitochondria|Nucleus|Chloroplasts|Ribosomes,Chloroplasts,Chloroplasts capture light energy for photosynthesis.
+Q15,M09,What gas do plants release during photosynthesis?,Carbon dioxide|Oxygen|Nitrogen|Hydrogen,Oxygen,Splitting water releases oxygen.
+Q16,M10,How do plant roots decide which way to grow in space?,They follow gravity|They use light|They grow in circles|They do not grow,They use light,"Without gravity, plants use light to orient their growth."
