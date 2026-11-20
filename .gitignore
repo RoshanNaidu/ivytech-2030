@@ -22,3 +22,8 @@ data/*
 
 # Local tool config
 .claude/
+Madeline - Data/case_data.js
+Madeline - Data/course_materials.csv
+Madeline - Data/practice_questions.csv
+Madeline - Data/help_options.csv
+Madeline - Data/key_terms.csv
