@@ -1,0 +1,9 @@
+[theme]
+primaryColor = "#00843D"
+font = "sans serif"
+
+[browser]
+gatherUsageStats = false
+
+[server]
+runOnSave = true

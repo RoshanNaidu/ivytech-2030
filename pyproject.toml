@@ -1,0 +1,34 @@
+[project]
+name = "ivytech-2030"
+version = "0.1.0"
+description = "Ivy Tech 2030 Innovation Squad prototype (IT Challenge 2026)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "streamlit>=1.40",
+    "pandas>=2.2",
+    "numpy>=1.26",
+    "plotly>=5.24",
+    "scikit-learn>=1.5",
+    "openpyxl>=3.1",
+    "python-dotenv>=1.0",
+    "anthropic>=0.70",
+    "requests>=2.32",
+]
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.pytest.ini_options]
+pythonpath = ["app"]
+testpaths = ["tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["lib"]

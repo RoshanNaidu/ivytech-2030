@@ -1,0 +1,24 @@
+# Python / uv
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Secrets
+.env
+.streamlit/secrets.toml
+
+# Challenge data stays local (may contain student records)
+data/*
+!data/README.md
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+*.log
+
+# Local tool config
+.claude/
