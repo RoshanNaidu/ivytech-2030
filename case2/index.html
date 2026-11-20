@@ -909,7 +909,7 @@ function revealAnswer(material, q) {
     <div class="feedback-banner ${bannerClass}" role="alert">${bannerText}</div>
     <div class="feedback-body">
       <p class="feedback-explanation">${escHtml(q.explanation)}</p>
-      <div class="source-disclosure">${sourceDisclosureHTML}</div>
+      ${sourceDisclosureHTML}
     </div>
   `;
   feedbackEl.classList.add('visible');
