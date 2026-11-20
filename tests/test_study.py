@@ -10,10 +10,13 @@ import os
 os.environ["AI_PROVIDER"] = "offline"
 
 from lib.study import (  # noqa: E402
+    _correct_or_drop_question,
+    _find_proof_passage,
     make_questions,
     offline_questions,
     offline_summary,
     split_passages,
+    strip_metadata,
     summarise,
 )
 
@@ -50,6 +53,23 @@ LONG_TEXT = (
     "Together, technology and careful planning help businesses avoid the worst outcomes "
     "when disruptions strike their supply chains unexpectedly. "
 )
+
+# The raw sample file text (with header lines)
+BAM101_RAW = """\
+Supply-Chain Risk Management — BAM 101, Week 3
+Fictional course reading created for the Ivy Tech 2030 Innovation Squad prototype.
+All companies, people, and events described below are entirely invented.
+
+[P1]
+Every business that makes or sells a product depends on a supply chain.
+A supply chain is the full set of steps needed to turn raw materials into something a customer can buy.
+
+[P2]
+Risks in a supply chain come from many different sources. Natural events such as floods can close ports.
+
+[P3]
+Companies use several strategies to reduce supply-chain risk. Diversification means working with more than one supplier.
+"""
 
 
 def _offline_ask(prompt: str, system: str = "", json_mode: bool = False, **kwargs):
@@ -101,9 +121,9 @@ def test_summarise_verification():
     fabricated_json = (
         '{"bullets": ['
         '{"text": "Risk can harm a business", "passage_id": "P1", '
-        '"proof_text": "Supply-chain risk is the chance that one part of the production process will fail."},'
+        '"proof": "Supply-chain risk is the chance that one part of the production process will fail."},'
         '{"text": "This is completely made up and not in any passage", "passage_id": "P1", '
-        '"proof_text": "Dragons ate the entire supply chain on Tuesday morning in Paris."}'
+        '"proof": "Dragons ate the entire supply chain on Tuesday morning in Paris."}'
         "]}"
     )
 
@@ -114,7 +134,8 @@ def test_summarise_verification():
     bullets = result["bullets"]
     # The fabricated bullet must have been dropped
     for b in bullets:
-        assert "dragon" not in b["proof_text"].lower(), "Fabricated bullet should have been dropped"
+        proof = b.get("proof") or b.get("proof_text", "")
+        assert "dragon" not in proof.lower(), "Fabricated bullet should have been dropped"
     assert result["dropped"] >= 1, "Expected at least 1 dropped bullet"
 
 
@@ -155,11 +176,12 @@ def test_offline_summary_no_model():
     for b in bullets:
         assert "text" in b
         assert "passage_id" in b
-        assert "proof_text" in b
-        # proof_text must be a real sentence from the passage
+        # Fix #2: new field name is "proof"
+        assert "proof" in b, "offline_summary must use 'proof' field (not 'proof_text')"
+        # proof must be a real sentence from the passage
         pid = b["passage_id"]
         assert pid in passages
-        assert b["proof_text"] in passages[pid] or len(b["proof_text"]) > 0
+        assert b["proof"] in passages[pid] or len(b["proof"]) > 0
 
 
 # ── Test 6: offline_questions returns ≥ 1 question with no AI call ───────────
@@ -188,7 +210,7 @@ def test_verification_rejects_fabricated():
     fake_item = {
         "text": "Foxes are fast",
         "passage_id": "P1",
-        "proof_text": "Invisible space dragons rearranged the solar system last Tuesday.",
+        "proof": "Invisible space dragons rearranged the solar system last Tuesday.",
     }
     assert not _verify_bullet(fake_item, passages), "Fabricated proof should be rejected"
 
@@ -197,7 +219,7 @@ def test_verification_rejects_fabricated():
 
 
 def test_verification_accepts_exact():
-    """_verify_bullet must return True for a proof_text that is literally in the passage."""
+    """_verify_bullet must return True for a proof that is literally in the passage."""
     from lib.study import _verify_bullet
 
     proof = "The quick brown fox jumps over the lazy dog."
@@ -205,7 +227,7 @@ def test_verification_accepts_exact():
     item = {
         "text": "Foxes are agile",
         "passage_id": "P1",
-        "proof_text": proof,
+        "proof": proof,
     }
     assert _verify_bullet(item, passages), "Exact proof text should be accepted"
 
@@ -240,3 +262,177 @@ def test_questions_tops_up_when_ai_empty():
 
     result = make_questions(passages, empty_ask)
     assert len(result["questions"]) >= 3, "Should top up to ≥ 3 questions from offline fallback"
+
+
+# ── REGRESSION TEST 11: strip_metadata removes header lines ──────────────────
+
+
+def test_strip_metadata_removes_header_lines():
+    """Header lines (title, fictional disclaimer, [Pn] markers) must not appear in body text."""
+    body = strip_metadata(BAM101_RAW)
+
+    # Header patterns that should be gone
+    assert "Supply-Chain Risk Management — BAM 101" not in body, "Title line should be stripped"
+    assert "Fictional course reading" not in body, "Fictional disclaimer should be stripped"
+    assert "All companies" not in body, "All-companies disclaimer should be stripped"
+    assert "[P1]" not in body, "[P1] passage marker should be stripped"
+    assert "[P2]" not in body, "[P2] passage marker should be stripped"
+    assert "[P3]" not in body, "[P3] passage marker should be stripped"
+
+    # Real content lines must survive
+    assert "Every business that makes or sells a product" in body
+    assert "Risks in a supply chain come from many different sources" in body
+    assert "Companies use several strategies" in body
+
+
+def test_strip_metadata_body_feeds_passages():
+    """split_passages on the stripped body should produce ≥ 1 passage with no header content."""
+    body = strip_metadata(BAM101_RAW)
+    passages = split_passages(body)
+    assert len(passages) >= 1
+
+    all_text = " ".join(passages.values())
+    assert "Fictional" not in all_text
+    assert "All companies" not in all_text
+    assert "BAM 101" not in all_text
+
+
+# ── REGRESSION TEST 12: summary items have text, passage_id, proof ───────────
+
+
+def test_offline_summary_shape():
+    """offline_summary must return items with text, passage_id, and proof fields."""
+    passages = split_passages(LONG_TEXT)
+    bullets = offline_summary(passages)
+    assert len(bullets) >= 1
+    for b in bullets:
+        assert "text" in b, "Missing 'text' field"
+        assert "passage_id" in b, "Missing 'passage_id' field"
+        assert "proof" in b, "Missing 'proof' field — shape changed in Fix #2"
+        assert isinstance(b["text"], str) and b["text"]
+        assert isinstance(b["proof"], str) and b["proof"]
+
+
+def test_summarise_bullets_have_proof_field():
+    """summarise() must return bullets with a 'proof' field (not 'proof_text')."""
+    from lib.ai import Answer
+
+    passages = split_passages(LONG_TEXT)
+
+    # AI returns old-style "proof_text" key — must be normalised to "proof"
+    legacy_json = (
+        '{"bullets": ['
+        '{"text": "Risk can harm a business", "passage_id": "P1", '
+        '"proof_text": "Supply-chain risk is the chance that one part of the production process will fail."}'
+        "]}"
+    )
+
+    def fake_ask(prompt, system="", json_mode=False, **kwargs):
+        return Answer(legacy_json, "fake")
+
+    result = summarise(passages, fake_ask)
+    for b in result["bullets"]:
+        assert "proof" in b, "Bullet must have 'proof' field"
+        assert "proof_text" not in b, "'proof_text' should have been normalised to 'proof'"
+
+
+# ── REGRESSION TEST 13: every displayed proof is in the passage shown ─────────
+
+
+def test_every_proof_exists_in_its_passage():
+    """For every verified bullet, proof must be found (fuzzy) in the passage_id shown."""
+    from lib.ai import Answer
+    from lib.study import _fuzzy_match
+
+    passages = split_passages(LONG_TEXT)
+
+    # Fabricate bullets: one correct, one with wrong passage_id (should be corrected, not dropped)
+    p2_sentence = "Companies use several strategies to reduce supply-chain risk."
+    correctable_json = (
+        '{"bullets": ['
+        '{"text": "Risk can harm a business", "passage_id": "P1", '
+        '"proof": "Supply-chain risk is the chance that one part of the production process will fail."},'
+        # This proof is in P2 but cites P1 — should be corrected to P2
+        f'{{"text": "Companies manage risk", "passage_id": "P1", "proof": "{p2_sentence}"}}'
+        "]}"
+    )
+
+    def fake_ask(prompt, system="", json_mode=False, **kwargs):
+        return Answer(correctable_json, "fake")
+
+    result = summarise(passages, fake_ask)
+    for b in result["bullets"]:
+        pid = b["passage_id"]
+        proof = b.get("proof") or b.get("proof_text", "")
+        passage_text = passages.get(pid, "")
+        assert passage_text, f"passage_id {pid} not found in passages"
+        assert _fuzzy_match(proof, passage_text), (
+            f"Proof not found in its cited passage {pid}:\n  proof: {proof!r}"
+        )
+
+
+# ── REGRESSION TEST 14: passage-id correction works when cited id is wrong ────
+
+
+def test_passage_id_correction_question():
+    """_correct_or_drop_question corrects wrong passage_id instead of dropping."""
+    # Set up two passages
+    passages = {
+        "P1": "The cat sat on the mat. A quick brown fox jumped over the lazy dog.",
+        "P2": "The sky is blue and the grass is green. Birds fly south for the winter.",
+    }
+
+    # Item citing P1 but proof_text is actually in P2
+    item = {
+        "stem": "What colour is the sky?",
+        "options": ["Blue", "Red", "Green", "Yellow"],
+        "correct_index": 0,
+        "passage_id": "P1",  # WRONG — sentence is in P2
+        "proof_text": "The sky is blue and the grass is green.",
+    }
+
+    result = _correct_or_drop_question(item, passages)
+    assert result is not None, "Item should not be dropped — proof exists in P2"
+    assert result["passage_id"] == "P2", (
+        f"passage_id should be corrected to P2, got {result['passage_id']!r}"
+    )
+
+
+def test_passage_id_drop_when_proof_in_no_passage():
+    """_correct_or_drop_question returns None when proof is in no passage."""
+    passages = {
+        "P1": "The cat sat on the mat.",
+        "P2": "The sky is blue and the grass is green.",
+    }
+
+    item = {
+        "stem": "What did the aliens do?",
+        "options": ["A", "B", "C", "D"],
+        "correct_index": 0,
+        "passage_id": "P1",
+        "proof_text": "Aliens invaded the planet and ate all the cheese on Monday.",
+    }
+
+    result = _correct_or_drop_question(item, passages)
+    assert result is None, "Item should be dropped when proof is in no passage"
+
+
+# ── REGRESSION TEST 15: _find_proof_passage searches all passages ─────────────
+
+
+def test_find_proof_passage_finds_correct_passage():
+    """_find_proof_passage must return the passage where the proof actually lives."""
+    passages = {
+        "P1": "Apples are red. The sun rises in the east.",
+        "P2": "Bananas are yellow. The moon reflects sunlight.",
+        "P3": "Cherries are small and round. They grow on trees.",
+    }
+
+    pid = _find_proof_passage("The moon reflects sunlight.", passages)
+    assert pid == "P2", f"Expected P2, got {pid!r}"
+
+    pid2 = _find_proof_passage("Cherries are small and round.", passages)
+    assert pid2 == "P3", f"Expected P3, got {pid2!r}"
+
+    pid3 = _find_proof_passage("Dragons do not exist in any passage.", passages)
+    assert pid3 is None, "Should return None when proof not found"

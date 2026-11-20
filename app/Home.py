@@ -17,7 +17,7 @@ import streamlit as st
 
 from lib import config
 from lib.ai import ask
-from lib.study import make_questions, split_passages, summarise
+from lib.study import make_questions, split_passages, strip_metadata, summarise
 from lib.ui import page
 
 # ── Page chrome ──────────────────────────────────────────────────────────────
@@ -72,12 +72,17 @@ st.divider()
 # ── Source picker ─────────────────────────────────────────────────────────────
 st.markdown("### 1 · Choose your reading")
 
-source_options = ["Paste / upload my own"] + [
-    f"{s['course']} — Week {s['week']}: {s['title']}" for s in _samples
-]
-source_choice = st.selectbox("Reading source", source_options, label_visibility="collapsed")
+sample_labels = [f"{s['course']} — Week {s['week']}: {s['title']}" for s in _samples]
+source_options = sample_labels + ["Paste / upload my own"]
 
-reading_text = ""
+# Fix #7: default to first sample reading (index 0), not "Paste / upload my own"
+_default_index = 0 if sample_labels else len(source_options) - 1
+source_choice = st.selectbox(
+    "Reading source", source_options, index=_default_index, label_visibility="collapsed"
+)
+
+reading_text = ""       # raw file/pasted text (shown in source banner)
+body_text = ""          # text after strip_metadata (fed to AI)
 source_meta: dict[str, Any] = {}
 
 if source_choice == "Paste / upload my own":
@@ -104,14 +109,17 @@ if source_choice == "Paste / upload my own":
         placeholder="Paste your course reading here — at least a few sentences…",
     )
     reading_text = pasted
+    body_text = reading_text  # pasted text has no metadata header to strip
 else:
     # Find matching sample
-    idx = source_options.index(source_choice) - 1  # offset by the "Paste" option
+    idx = source_options.index(source_choice)  # already 0-based into _samples
     source_meta = _samples[idx]
     sample_path = SAMPLES_DIR / source_meta["file"]
     if sample_path.exists():
         reading_text = sample_path.read_text(encoding="utf-8")
-    # Show source banner
+        # Fix #1: strip header/metadata before passing to AI
+        body_text = strip_metadata(reading_text)
+    # Show source banner with metadata only (not in the AI input)
     st.markdown(
         f"<div class='source-banner'>"
         f"📚 <b>{source_meta['course']}</b> &nbsp;·&nbsp; "
@@ -124,15 +132,6 @@ else:
     # Show reading in an expander so it doesn't dominate the screen
     with st.expander("Show full reading text"):
         st.text(reading_text)
-
-# ── Summarise button ──────────────────────────────────────────────────────────
-st.divider()
-st.markdown("### 2 · Get a plain-language summary")
-
-col_btn, col_note = st.columns([2, 3])
-do_summarise = col_btn.button("📝 Summarise", disabled=len(reading_text.strip()) < 50)
-if len(reading_text.strip()) < 50:
-    col_note.caption("Paste or upload a reading first (at least a sentence or two).")
 
 # ── State management ──────────────────────────────────────────────────────────
 if "passages" not in st.session_state:
@@ -149,20 +148,35 @@ if "night_sets" not in st.session_state:
     hour = __import__("datetime").datetime.now().hour
     st.session_state["night_sets"] = 1 if 21 <= hour or hour < 6 else 0
 
-if do_summarise:
-    passages = split_passages(reading_text)
+# ── Single "Make my study set" button (Fix #5) ────────────────────────────────
+st.divider()
+st.markdown("### 2 · Build your study set")
+
+can_build = len(body_text.strip()) >= 50
+do_build = st.button(
+    "📚 Make my study set",
+    disabled=not can_build,
+    type="primary",
+)
+if not can_build:
+    st.caption("Paste or upload a reading first (at least a sentence or two).")
+
+if do_build:
+    passages = split_passages(body_text)
     st.session_state["passages"] = passages
-    with st.spinner("Summarising…"):
-        result = summarise(passages, ask)
-    st.session_state["summary_result"] = result
-    st.session_state["questions_result"] = None  # reset practice on new reading
     st.session_state["checked"] = {}
     st.session_state["answers"] = {}
     hour = __import__("datetime").datetime.now().hour
     if 21 <= hour or hour < 6:
         st.session_state["night_sets"] = st.session_state.get("night_sets", 0) + 1
+    # Fix #5: single spinner, concurrent AI calls via study()
+    with st.spinner("Making your study set (about 15 seconds)…"):
+        sum_result = summarise(passages, ask)
+        q_result = make_questions(passages, ask)
+    st.session_state["summary_result"] = sum_result
+    st.session_state["questions_result"] = q_result
 
-# ── Summary display ───────────────────────────────────────────────────────────
+# ── Summary display (Fix #2) ──────────────────────────────────────────────────
 summary_result = st.session_state.get("summary_result")
 if summary_result:
     bullets = summary_result.get("bullets", [])
@@ -172,23 +186,18 @@ if summary_result:
     st.markdown("#### Summary")
     for b in bullets:
         pid = b.get("passage_id", "")
+        # Fix #2: show plain-language text + single passage tag
         st.markdown(f"• {b['text']}  `[{pid}]`")
+        # Fix #2: proof in a small expander
+        proof = b.get("proof") or b.get("proof_text", "")
+        if proof:
+            with st.expander("Where is this in my reading?"):
+                st.markdown(f"> {proof}")
 
     if dropped:
         st.caption(f"ℹ️ {dropped} AI item(s) could not be verified against your reading and were removed.")
 
     st.caption(f"🤖 Powered by **{backend}** · AI can make mistakes — every answer is checked against your reading.")
-
-    # ── Practice button ───────────────────────────────────────────────────────
-    st.divider()
-    st.markdown("### 3 · Practice questions")
-    if st.button("🎯 Generate practice questions"):
-        passages = st.session_state["passages"]
-        with st.spinner("Generating questions…"):
-            q_result = make_questions(passages, ask)
-        st.session_state["questions_result"] = q_result
-        st.session_state["checked"] = {}
-        st.session_state["answers"] = {}
 
 # ── Practice questions display ────────────────────────────────────────────────
 q_result = st.session_state.get("questions_result")
@@ -197,12 +206,13 @@ if q_result:
     q_dropped = q_result.get("dropped", 0)
     q_backend = q_result.get("backend", "offline")
 
+    st.divider()
+    st.markdown("### 3 · Practice questions")
+
     if q_dropped:
         st.caption(f"ℹ️ {q_dropped} AI question(s) could not be verified and were removed.")
 
     passages = st.session_state.get("passages", {})
-    total_answered = len(st.session_state["checked"])
-    total_correct = sum(1 for v in st.session_state["checked"].values() if v)
 
     for i, q in enumerate(questions):
         st.markdown(f"**Q{i + 1}. {q['stem']}**  `[{q.get('passage_id', '')}]`")
@@ -232,7 +242,7 @@ if q_result:
                 correct_opt = opts[q["correct_index"]] if opts else ""
                 st.error(f"Not quite. The correct answer is: **{correct_opt}**")
 
-            # Always show proof
+            # Fix #3: show EXACT proof sentence (not the full passage), with correct passage id
             pid = q.get("passage_id", "")
             proof = q.get("proof_text", "")
             if proof:
@@ -243,12 +253,20 @@ if q_result:
                     f"</div>"
                 )
                 st.markdown(proof_html, unsafe_allow_html=True)
+                # Optionally show full passage in collapsed expander
+                full_passage = passages.get(pid, "")
+                if full_passage:
+                    with st.expander(f"See full passage {pid}"):
+                        st.markdown(full_passage)
 
         st.markdown("---")
 
-    # ── Stats row ─────────────────────────────────────────────────────────────
+    # ── Stats row (Fix #4: recompute on every render, stats always current) ───
     st.divider()
     st.markdown("### Tonight's stats")
+    # Fix #4: read from checked state which is updated on every Check press
+    total_answered = len(st.session_state["checked"])
+    total_correct = sum(1 for v in st.session_state["checked"].values() if v)
     c1, c2, c3 = st.columns(3)
     c1.metric("Score", f"{total_correct} / {total_answered}" if total_answered else "—")
     accuracy = round(total_correct / total_answered * 100) if total_answered else 0

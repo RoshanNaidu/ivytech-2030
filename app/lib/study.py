@@ -2,9 +2,11 @@
 
 Public API
 ----------
+strip_metadata(text)       -> str                       body text with header lines removed
 split_passages(text)       -> dict[str, str]           {P1: ..., P2: ...}
-summarise(passages, ask_fn)-> list[dict]               [{text, passage_id}]
-make_questions(passages, ask_fn) -> list[dict]         [{stem, options, correct_index, passage_id, proof_text}]
+summarise(passages, ask_fn)-> dict                     {bullets: [{text, passage_id, proof}], dropped, backend}
+make_questions(passages, ask_fn) -> dict
+                                   {questions: [{stem, options, correct_index, passage_id, proof_text}], ...}
 offline_summary(passages)  -> list[dict]
 offline_questions(passages)-> list[dict]
 study(text, ask_fn)        -> dict  (all-in-one, cached by text hash)
@@ -17,8 +19,55 @@ import json
 import re
 import textwrap
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from difflib import SequenceMatcher
 from functools import lru_cache
+
+# ---------------------------------------------------------------------------
+# Metadata / header stripping  (Fix #1)
+# ---------------------------------------------------------------------------
+
+# Lines that are part of the sample file preamble rather than the reading body:
+#   • The title line (matches a known pattern or heuristic)
+#   • "Fictional course reading…" disclaimer
+#   • "All companies, people…" disclaimer
+#   • Blank lines
+# We strip them before splitting into passages so they don't pollute P1 or the summary.
+
+_HEADER_PATTERNS: list[re.Pattern] = [
+    # Passage markers like "[P1]", "[P2]" — stripped; we do our own splitting
+    re.compile(r"^\s*\[P\d+\]\s*$"),
+    # "Fictional … created for …" disclaimer
+    re.compile(r"^\s*Fictional\b", re.IGNORECASE),
+    # "All companies … invented." disclaimer
+    re.compile(r"^\s*All companies\b", re.IGNORECASE),
+    # Title lines: typically "Title — Course, Week N" (contains " — " and no sentence-ending punctuation)
+    re.compile(r"^[^.!?]*—[^.!?]*$"),
+]
+
+
+def strip_metadata(text: str) -> str:
+    """Remove header / metadata lines from a sample reading.
+
+    Strips:
+    - [Pn] passage-marker lines (we re-split ourselves)
+    - "Fictional course reading …" disclaimer lines
+    - "All companies … invented." disclaimer lines
+    - Title lines that look like "Title — Course, Week N" (no sentence punctuation)
+
+    Returns the cleaned body text as a single string with normalised whitespace.
+    """
+    lines = text.splitlines()
+    body_lines: list[str] = []
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if any(pat.match(stripped) for pat in _HEADER_PATTERNS):
+            continue
+        body_lines.append(stripped)
+    return " ".join(body_lines)
+
 
 # ---------------------------------------------------------------------------
 # Passage splitting
@@ -121,13 +170,24 @@ def _fuzzy_match(needle: str, haystack: str, threshold: float = 0.85) -> bool:
     return False
 
 
+def _find_proof_passage(proof: str, passages: dict[str, str]) -> str | None:
+    """Search all passages for proof; return the passage_id where it is found, or None.
+
+    Fix #3: searches ALL passages so that a wrong cited id can be corrected.
+    """
+    for pid, text in passages.items():
+        if _fuzzy_match(proof, text):
+            return pid
+    return None
+
+
 def _verify_bullet(item: dict, passages: dict[str, str]) -> bool:
-    """Return True if item["proof_text"] or item["text"] can be found in the named passage."""
+    """Return True if item["proof"] or item["proof_text"] or item["text"] can be found in the named passage."""
     pid = item.get("passage_id", "")
     passage = passages.get(pid, "")
     if not passage:
         return False
-    probe = item.get("proof_text") or item.get("text", "")
+    probe = item.get("proof") or item.get("proof_text") or item.get("text", "")
     return _fuzzy_match(probe, passage)
 
 
@@ -141,6 +201,48 @@ def _verify_question(item: dict, passages: dict[str, str]) -> bool:
     return _fuzzy_match(proof, passage)
 
 
+def _correct_or_drop_question(item: dict, passages: dict[str, str]) -> dict | None:
+    """Fix #3: If proof_text is not in the cited passage, search all passages.
+
+    Returns the item (possibly with corrected passage_id) if found anywhere,
+    or None if not found in any passage.
+    """
+    proof = item.get("proof_text", "")
+    if not proof:
+        return None
+    # First check the cited passage
+    if _verify_question(item, passages):
+        return item
+    # Search all passages for a correct home
+    found_pid = _find_proof_passage(proof, passages)
+    if found_pid is not None:
+        corrected = dict(item)
+        corrected["passage_id"] = found_pid
+        return corrected
+    return None
+
+
+def _correct_or_drop_bullet(item: dict, passages: dict[str, str]) -> dict | None:
+    """Fix #3 applied to summary bullets.
+
+    Returns the item (possibly with corrected passage_id) if found anywhere,
+    or None if not found in any passage.
+    """
+    probe = item.get("proof") or item.get("proof_text") or item.get("text", "")
+    if not probe:
+        return None
+    # First check the cited passage
+    if _verify_bullet(item, passages):
+        return item
+    # Search all passages for a correct home
+    found_pid = _find_proof_passage(probe, passages)
+    if found_pid is not None:
+        corrected = dict(item)
+        corrected["passage_id"] = found_pid
+        return corrected
+    return None
+
+
 # ---------------------------------------------------------------------------
 # AI summarisation
 # ---------------------------------------------------------------------------
@@ -148,10 +250,13 @@ def _verify_question(item: dict, passages: dict[str, str]) -> bool:
 _SUMMARISE_SYSTEM = (
     "You are a plain-language tutor helping adult students who are English-language learners. "
     "Use ONLY the passages provided. Write in simple, clear English (aim for 8th-grade level). "
-    "For every bullet, cite the passage id (e.g. P1) where the idea comes from. "
-    "Copy the proof sentence WORD-FOR-WORD from that passage. "
+    "For every bullet:\n"
+    "  - 'text' is a SHORT plain-language paraphrase (1–2 sentences, NOT copied word-for-word)\n"
+    "  - 'passage_id' is the passage id (e.g. P1) where the idea comes from\n"
+    "  - 'proof' is the EXACT supporting sentence copied WORD-FOR-WORD from that passage\n"
     "Return ONLY valid JSON: "
-    '{"bullets": [{"text": "...", "passage_id": "P1", "proof_text": "...exact sentence..."}, ...]}'
+    '{"bullets": [{"text": "plain paraphrase", "passage_id": "P1", "proof": "exact copied sentence"}, ...]}'
+    " Aim for 5 bullets."
 )
 
 _QUESTIONS_SYSTEM = (
@@ -162,6 +267,7 @@ _QUESTIONS_SYSTEM = (
     "Return ONLY valid JSON: "
     '{"questions": [{"stem": "...", "options": ["A", "B", "C", "D"], "correct_index": 0, '
     '"passage_id": "P1", "proof_text": "...exact sentence..."}, ...]}'
+    " Aim for 5 questions."
 )
 
 
@@ -175,14 +281,15 @@ def summarise(passages: dict[str, str], ask_fn: Callable) -> dict:
 
     Returns:
         {
-          "bullets": [{"text": str, "passage_id": str, "proof_text": str}],
+          "bullets": [{"text": str, "passage_id": str, "proof": str}],
           "dropped": int,
           "backend": str,
         }
     """
     prompt = (
-        "Summarise the following reading in 3–5 bullet points. "
-        "Plain English only. Each bullet must end with the passage id it came from.\n\n"
+        "Summarise the following reading in 5 bullet points for an English-language learner. "
+        "Plain English only. Each bullet must have a short paraphrase (text), the passage id, "
+        "and the exact proof sentence copied word-for-word.\n\n"
         + _passages_prompt(passages)
     )
     answer = ask_fn(prompt, system=_SUMMARISE_SYSTEM, json_mode=True)
@@ -201,8 +308,16 @@ def summarise(passages: dict[str, str], ask_fn: Callable) -> dict:
         if not isinstance(item, dict):
             dropped += 1
             continue
-        if _verify_bullet(item, passages):
-            verified.append(item)
+        # Normalise field: accept both "proof" and legacy "proof_text"
+        if "proof_text" in item and "proof" not in item:
+            item["proof"] = item.pop("proof_text")
+        # Also strip the [P3] ... [P3] pattern from text (Fix #2)
+        if "text" in item:
+            item["text"] = re.sub(r"\s*\[P\d+\]\s*", " ", item["text"]).strip()
+
+        result = _correct_or_drop_bullet(item, passages)
+        if result is not None:
+            verified.append(result)
         else:
             dropped += 1
 
@@ -213,10 +328,10 @@ def summarise(passages: dict[str, str], ask_fn: Callable) -> dict:
         for b in fallback:
             if b["passage_id"] not in existing_pids:
                 verified.append(b)
-            if len(verified) >= 3:
+            if len(verified) >= 5:
                 break
 
-    return {"bullets": verified, "dropped": dropped, "backend": backend}
+    return {"bullets": verified[:5], "dropped": dropped, "backend": backend}
 
 
 def make_questions(passages: dict[str, str], ask_fn: Callable) -> dict:
@@ -230,7 +345,7 @@ def make_questions(passages: dict[str, str], ask_fn: Callable) -> dict:
         }
     """
     prompt = (
-        "Create 3 multiple-choice questions from the following reading. "
+        "Create 5 multiple-choice questions from the following reading. "
         "Each question must have exactly 4 options (A, B, C, D) and one correct answer. "
         "Plain English only.\n\n"
         + _passages_prompt(passages)
@@ -259,16 +374,18 @@ def make_questions(passages: dict[str, str], ask_fn: Callable) -> dict:
             except ValueError:
                 ci = 0
         item["correct_index"] = ci
-        if _verify_question(item, passages):
-            verified.append(item)
+        # Fix #3: correct or drop based on all-passage search
+        result = _correct_or_drop_question(item, passages)
+        if result is not None:
+            verified.append(result)
         else:
             dropped += 1
 
-    # Top up from offline if fewer than 3 verified questions
+    # Top up from offline if fewer than 3 verified questions (Fix #6)
     if len(verified) < 3:
         fallback = offline_questions(passages)
         for q in fallback:
-            if len(verified) >= 3:
+            if len(verified) >= 5:
                 break
             verified.append(q)
 
@@ -284,6 +401,7 @@ def offline_summary(passages: dict[str, str]) -> list[dict]:
     """Deterministic fallback — works with no AI model.
 
     Builds one bullet per passage from the first full sentence of that passage.
+    Uses the new {text, passage_id, proof} shape (Fix #2).
     """
     bullets: list[dict] = []
     for pid, text in passages.items():
@@ -292,7 +410,7 @@ def offline_summary(passages: dict[str, str]) -> list[dict]:
             continue
         proof = sents[0]
         # Simple plain-English paraphrase: just use the first sentence as the bullet
-        bullets.append({"text": proof, "passage_id": pid, "proof_text": proof})
+        bullets.append({"text": proof, "passage_id": pid, "proof": proof})
     return bullets
 
 
@@ -362,7 +480,7 @@ def offline_questions(passages: dict[str, str]) -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
-# All-in-one cached entry point
+# All-in-one cached entry point  (Fix #5: concurrent AI calls)
 # ---------------------------------------------------------------------------
 
 
@@ -375,8 +493,14 @@ def _cached_study(text_hash: str, text: str, provider_name: str) -> dict:  # noq
     from lib.ai import ask
 
     passages = split_passages(text)
-    summary = summarise(passages, ask)
-    questions = make_questions(passages, ask)
+
+    # Run summarise and make_questions concurrently (Fix #5)
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        f_summary = pool.submit(summarise, passages, ask)
+        f_questions = pool.submit(make_questions, passages, ask)
+        summary = f_summary.result()
+        questions = f_questions.result()
+
     return {
         "passages": passages,
         "summary": summary,
@@ -385,7 +509,10 @@ def _cached_study(text_hash: str, text: str, provider_name: str) -> dict:  # noq
 
 
 def study(text: str) -> dict:
-    """All-in-one entry point.  Results are cached per (text, AI_PROVIDER)."""
+    """All-in-one entry point.  Results are cached per (text, AI_PROVIDER).
+
+    Accepts the BODY text (after strip_metadata has been called).
+    """
     import os
 
     provider_name = os.getenv("AI_PROVIDER", "offline")
@@ -397,6 +524,7 @@ def study(text: str) -> dict:
 # ---------------------------------------------------------------------------
 
 __all__ = [
+    "strip_metadata",
     "split_passages",
     "summarise",
     "make_questions",
