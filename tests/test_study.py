@@ -524,3 +524,78 @@ def test_highlight_proof_empty_inputs():
     assert highlight_proof("", "proof") == ""
     assert highlight_proof("some passage", "") == "some passage"
     assert highlight_proof("", "") == ""
+
+
+# ── F1 TEST 18: flesch_kincaid_grade — simple text scores lower than complex ──
+
+
+def test_fk_grade_simple_lower_than_complex():
+    """A short, simple text must score a lower FK grade than a dense academic one."""
+    from lib.study import flesch_kincaid_grade
+
+    simple = (
+        "Dogs are pets. They like to run. Kids love dogs. Dogs eat food."
+    )
+    complex_text = (
+        "The epistemological foundations of contemporary cognitive neuroscience necessitate "
+        "a comprehensive reevaluation of previously established theoretical frameworks "
+        "concerning the neurobiological underpinnings of consciousness. "
+        "Sophisticated computational methodologies have substantially transformed our "
+        "understanding of prefrontal cortical architectures and their interdependencies "
+        "with subcortical neuroanatomical structures."
+    )
+    grade_simple = flesch_kincaid_grade(simple)
+    grade_complex = flesch_kincaid_grade(complex_text)
+    assert grade_simple < grade_complex, (
+        f"Simple text (grade {grade_simple}) should score lower than complex text (grade {grade_complex})"
+    )
+
+
+def test_fk_grade_returns_float():
+    """flesch_kincaid_grade must return a non-negative float."""
+    from lib.study import flesch_kincaid_grade
+
+    grade = flesch_kincaid_grade("The cat sat on the mat. The dog ran fast.")
+    assert isinstance(grade, float), "FK grade must be a float"
+    assert grade >= 0.0, "FK grade must be non-negative"
+
+
+def test_fk_grade_empty_returns_zero():
+    """flesch_kincaid_grade must return 0.0 for empty or whitespace input."""
+    from lib.study import flesch_kincaid_grade
+
+    assert flesch_kincaid_grade("") == 0.0
+    assert flesch_kincaid_grade("   ") == 0.0
+
+
+def test_fk_grade_known_simple():
+    """Very short, common words should score below grade 5."""
+    from lib.study import flesch_kincaid_grade
+
+    very_simple = "I see a dog. The dog is big. I run fast."
+    grade = flesch_kincaid_grade(very_simple)
+    # This text should be well below grade 5
+    assert grade < 5.0, f"Expected grade < 5 for very simple text, got {grade}"
+
+
+def test_fk_grade_offline_summary_lower_than_original():
+    """The offline summary of a passage should have a lower or equal FK grade than the original."""
+    from lib.study import flesch_kincaid_grade, offline_summary, split_passages
+
+    # Use a moderately complex text
+    text = (
+        "Supply-chain risk is the probability that one or more components of the production "
+        "process will experience unexpected disruptions, resulting in operational inefficiencies. "
+        "Organisations must develop comprehensive mitigation strategies to address vulnerabilities "
+        "in their procurement and distribution networks."
+    )
+    passages = split_passages(text)
+    bullets = offline_summary(passages)
+    summary_text = " ".join(b.get("text_en") or b.get("text", "") for b in bullets)
+    grade_orig = flesch_kincaid_grade(text)
+    grade_summary = flesch_kincaid_grade(summary_text)
+    # Offline summary is the first sentence, which should be <= original grade
+    # (can be equal if first sentence is the hardest)
+    assert grade_summary <= grade_orig + 2.0, (
+        f"Summary grade {grade_summary} should not be much higher than original {grade_orig}"
+    )

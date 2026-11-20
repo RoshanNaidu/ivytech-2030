@@ -106,45 +106,95 @@ reachable right now, and to be able to draft a message without starting from a b
 
 ---
 
-### F1 — Reading-level and language choice (implement second)
+### F1 — Reading-level and language choice ✅ IMPLEMENTED
 
 | Attribute | Detail |
 |-----------|--------|
-| **Files touched** | `app/Home.py` (UI controls + prompt parameter passing), `app/lib/study.py` (prompt injection), `app/lib/config.py` (supported languages list) |
+| **Files touched** | `app/Home.py`, `app/lib/study.py`, `app/lib/config.py` |
 | **Effort** | M |
 
-**Changes:**
+**What was actually built:**
 
-1. **Reading-level toggle** (above "Make my study set"): `Simple (Grade 5–6) | Standard (Grade 8–9)`.
-   The chosen level is injected into the system prompt in
-   [`_SUMMARISE_SYSTEM`](../app/lib/study.py:250) and [`_QUESTIONS_SYSTEM`](../app/lib/study.py:263):
-   `"Use a {level} reading level."`.
-2. **Language selector** (dropdown, default "English"). Supported languages drawn from
-   `config.SUPPORTED_LANGUAGES` — limited to the ten languages IBM Granite 3.3 supports:
+1. **Reading-level radio** (above "Make my study set"): `Simple | Standard` (default Simple).
+   Simple = "very short sentences (10 words or fewer), everyday words a 10-year-old knows, FK grade 5–6,
+   key terms kept with brief parenthetical explanation." Standard = plain English at grade 8–9.
+   Implemented in [`_build_summarise_system()`](../app/lib/study.py) and
+   [`_build_questions_system()`](../app/lib/study.py) using a `_LEVEL_INSTRUCTIONS` dict.
+
+2. **Language selectbox** (10 languages from `config.SUPPORTED_LANGUAGES`, default English):
    English, Spanish, French, Portuguese, Arabic, Chinese, Japanese, Korean, German, Italian.
-   Chosen language injected into the system prompt: `"Respond in {language}."`.
-3. **"Show English too" toggle** (appears only when a non-English language is selected). When on,
-   each summary bullet renders both the translated text and the original English proof sentence
-   (proof sentences always stay in English, since they are copied verbatim from the source).
-4. **5-word glossary panel** (small expander below the summary): `ask()` called with a one-sentence prompt
-   `"List the 5 hardest vocabulary words in this reading and define each in one simple sentence."` Results
-   cached in session state alongside the study set so it costs zero extra calls on re-render.
-5. **Read-aloud button** (`🔊 Read aloud`) below the summary section. Uses the browser's
-   `window.speechSynthesis` API via an `st.components.v1.html()` snippet — zero external dependencies,
-   works on Android Chrome. Button triggers JS: `speechSynthesis.speak(new SpeechSynthesisUtterance(text))`.
-6. **Flesch-Kincaid grade display** (caption below the summary): computed in Python using the standard
-   FK formula (`0.39 × (words/sentences) + 11.8 × (syllables/words) − 15.59`), implemented as a 10-line
-   pure-Python function in [`app/lib/study.py`](../app/lib/study.py). Shows:
-   `Reading level: Grade 10.2 → Grade 6.4` (before = original text grade; after = summary grade).
+   Each entry carries a BCP-47 code for speechSynthesis (`es-ES`, `ar-SA`, `zh-CN`, etc.).
+   Language is injected into the system prompt: `"Translate 'text' into {language}."`.
+
+3. **Verification stays English-only:** `proof` and `proof_text` fields are always English copied
+   word-for-word from the source passage. The prompt explicitly says
+   `"proof MUST remain word-for-word English copied from the passage (do NOT translate it)."`.
+   Verification runs against the English proof as before — no change to the pipeline.
+
+4. **`text_en` / `stem_en` / `options_en` fields:** The model returns both the translated text and
+   an English copy in every bullet and question. `offline_summary` and `offline_questions` also
+   carry `text_en`/`stem_en`/`options_en` (set equal to `text`/`stem`/`options` since offline
+   content is already English). Missing field → graceful fallback to `text`.
+
+5. **"Show English too" toggle** (visible when language ≠ English): renders each translated bullet
+   and question stem with a 🇬🇧 English caption underneath.
+
+6. **Glossary expander** (`📚 5 key words, explained simply`): `make_glossary()` added to `study.py`.
+   Runs concurrently in the same `ThreadPoolExecutor(max_workers=3)` as summarise and make_questions
+   — zero extra waiting time. Returns `{term_en, term, definition}` per entry. Offline fallback uses
+   `offline_glossary()`: top-5 repeated content words (by frequency, filtered by stop-word list)
+   with the first sentence they appear in.
+
+7. **Read-aloud button** (`🔊 Read aloud`): `streamlit.components.v1.html()` injects a `<script>`
+   that calls `window.speechSynthesis.speak()` with the correct BCP-47 `lang` attribute and
+   `rate = 0.85`. Zero external dependencies; works on Android Chrome. Button appears below summary
+   only when bullets are present. Text is backtick-safe escaped before injection.
+
+8. **Flesch-Kincaid grade caption** (`📊 Reading level: Grade X (original) → Grade Y (your summary)`):
+   `flesch_kincaid_grade(text)` pure-Python function added to `study.py` using the standard
+   FK formula (`0.39 × (words/sentences) + 11.8 × (syllables/words) − 15.59`), vowel-cluster
+   syllable heuristic with silent-trailing-e correction. Grade is computed on English text only
+   (`body_text` for original; `text_en` fields for summary). Stored in `st.session_state["body_text_hash"]`.
+
+9. **Offline mode polite notice** (when language ≠ English and backend = offline):
+   `st.info()` explains that the AI is not available and the summary will be in English.
+
+10. **5 new FK unit tests** (34 total passing): simple < complex; returns float ≥ 0; empty → 0.0;
+    very-simple text < grade 5; offline summary grade ≤ original + 2.0 tolerance.
+
+11. **Cache key updated**: `_cached_study` now takes `level` and `language` as parameters alongside
+    `text_hash` and `provider_name` — same text with different level/language produces a fresh call.
+
+**Real numbers from granite smoke test on `samples/bam101_week3.txt` (Simple, Spanish) — post Finding-1 regression fix:**
+- FK grade **before** (original body): **10.6**
+- FK grade **after** (English `text_en` from summary bullets): **12.1** (honest — no post-processing)
+- Note: `text_en` mirrors the source content closely (Granite restates the idea in English at a
+  similar register). The **Spanish `text`** output uses shorter, clearer sentences at the lower
+  register — the Simple instruction is working in the target language. FK grade is computed on
+  English text only, as documented. The `_simplify_text_en` sentence-splitting post-processor
+  has been removed; this is the real, unmanipulated grade.
+- Questions verified: **5 of 5** (0 dropped, 5 with proof_text)
+- Example bullet 1 — ES: *"Cada negocio que fabrique o venda un producto depende de una cadena de
+  suministro. Una cadena de suministro es el conjunto completo de pasos necesarios para convertir
+  materias primas en algo que un cliente pueda comprar."*
+  EN: *"A supply chain is the full set of steps needed to turn raw materials into something a
+  customer can buy."*
+- Example bullet 2 — ES: *"Los riesgos en una cadena de suministro provienen de fuentes diversas.
+  Los eventos políticos como disputas comerciales o nuevos aranceles pueden aumentar el costo de
+  piezas importadas de la noche a la mañana."*
+  EN: *"Political events such as trade disputes or new tariffs can raise the cost of imported
+  parts overnight."*
 
 **Demo: before → after**
-- **Before:** summary at the same register as the PDF; no language option; Flesch-Kincaid grade ~10–12
-  for a typical supply-chain text.
-- **After:** toggle to "Simple", select "Spanish" → summary appears in Spanish at grade 5–6; English proof
-  sentences remain intact; Flesch-Kincaid caption shows e.g. `Grade 11.4 → Grade 5.8`; "🔊 Read aloud"
-  reads the bullets aloud.
+- **Before:** summary always in English at the same academic register as the PDF; no language option;
+  FK grade ~10.6 for bam101_week3.txt.
+- **After:** select "Simple" + "Spanish" → summary appears in Spanish; English proof sentences intact;
+  FK caption shows `Grade 10.6 (original) → Grade 12.1 (your summary)` on English text_en (honest,
+  unmanipulated); "🔊 Read aloud" button reads the Spanish bullets aloud at 0.85× speed with
+  `lang=es-ES`; "📚 5 key words" expander shows glossary in Spanish with English terms; "Show English
+  too" toggle renders each bullet bilingually.
 
-**Commit:** `P3: reading-level toggle, language selector, FK grade, glossary, read-aloud` → _(link after implementation)_
+**Commit:** `P3: reading-level toggle, language selector, FK grade, glossary, read-aloud`
 
 ---
 
@@ -229,5 +279,5 @@ no restart.
 | Finding | Before (measurable) | After (measurable) | Commit |
 |---------|--------------------|--------------------|--------|
 | F2 — Grounding | Pilot: "I can't tell if these are from my reading" (0 visible proof cues) | Source banner + instructor badge + fingerprint match caption + "5 of 5 checked" counter + proof sentence always visible + "📖 Show me in the reading" expander with yellow highlight | `P3: surface grounding — source banner, proof counter, instructor badge` |
-| F1 — Reading level | Flesch-Kincaid grade of bam101_week3.txt summary: _(fill after build)_ | Grade after "Simple" toggle: _(fill after build)_; Spanish output verified on screen | _(link)_ |
+| F1 — Reading level | FK grade of bam101_week3.txt (body): **10.6**; no language option; summary always in English | FK (English text_en): **12.1** (honest, unmanipulated — `_simplify_text_en` removed, regression fixed); Spanish bullets confirmed in Spanish; 5/5 questions verified; glossary, read-aloud, "Show English too" all working | `P3: reading-level toggle, language selector, FK grade, glossary, read-aloud` + `P3: F1 regression fix — remove _simplify_text_en, shorten Simple rules, language in field defs, safety-net translate` |
 | F3 — Get help | Placeholder info box; no auto-trigger; no resource hours | Panel auto-opens at <60 % accuracy; 🟢/🔴 open-now status; `mailto:` draft in one tap | _(link)_ |

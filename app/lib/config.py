@@ -36,3 +36,22 @@ CAMPUSES = 19
 
 # Accent colour used across charts.
 ACCENT = "#00843D"
+
+# Languages supported for summary/questions output.
+# Limited to languages IBM Granite 3.3 handles natively.
+# Each entry: (display_label, BCP-47 tag for speechSynthesis)
+SUPPORTED_LANGUAGES: list[tuple[str, str]] = [
+    ("English",    "en-US"),
+    ("Spanish",    "es-ES"),
+    ("French",     "fr-FR"),
+    ("Portuguese", "pt-PT"),
+    ("Arabic",     "ar-SA"),
+    ("Chinese",    "zh-CN"),
+    ("Japanese",   "ja-JP"),
+    ("Korean",     "ko-KR"),
+    ("German",     "de-DE"),
+    ("Italian",    "it-IT"),
+]
+
+# Reading levels offered to the user.
+READING_LEVELS: list[str] = ["Simple", "Standard"]

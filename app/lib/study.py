@@ -4,14 +4,20 @@ Public API
 ----------
 strip_metadata(text)       -> str                       body text with header lines removed
 split_passages(text)       -> dict[str, str]           {P1: ..., P2: ...}
-summarise(passages, ask_fn)-> dict                     {bullets: [{text, passage_id, proof}], dropped, backend}
-make_questions(passages, ask_fn) -> dict
-                                   {questions: [{stem, options, correct_index, passage_id, proof_text}], ...}
+summarise(passages, ask_fn, level, language)
+                           -> dict   {bullets: [{text, text_en, passage_id, proof}], dropped, backend}
+make_questions(passages, ask_fn, level, language)
+                           -> dict   {questions: [{stem, options, correct_index, passage_id,
+                                       proof_text, stem_en, options_en}], ...}
+make_glossary(passages, ask_fn, language) -> dict   {terms: [{term, term_en, definition}], backend}
 offline_summary(passages)  -> list[dict]
 offline_questions(passages)-> list[dict]
+offline_glossary(passages) -> list[dict]
 study(text, ask_fn)        -> dict  (all-in-one, cached by text hash)
 fingerprint_check(body_text, expected_fp) -> bool   sha256(body_text[:200]) == expected_fp
 highlight_proof(passage, proof_sentence) -> str     passage with proof_sentence wrapped in <mark>
+flesch_kincaid_grade(text) -> float                 Flesch-Kincaid grade level (pure Python)
+_translate_strings(strings, language, ask_fn) -> list[str]   safety-net batch translate
 """
 
 from __future__ import annotations
@@ -24,6 +30,7 @@ from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from difflib import SequenceMatcher
 from functools import lru_cache
+from typing import Any
 
 # ---------------------------------------------------------------------------
 # Metadata / header stripping  (Fix #1)
@@ -246,31 +253,172 @@ def _correct_or_drop_bullet(item: dict, passages: dict[str, str]) -> dict | None
 
 
 # ---------------------------------------------------------------------------
+# Flesch-Kincaid grade  (pure Python, no external library)
+# ---------------------------------------------------------------------------
+
+_VOWEL_RE = re.compile(r"[aeiouy]+", re.IGNORECASE)
+
+
+def _count_syllables(word: str) -> int:
+    """Rough syllable count using vowel-cluster heuristic."""
+    word = re.sub(r"[^a-zA-Z]", "", word).lower()
+    if not word:
+        return 0
+    count = len(_VOWEL_RE.findall(word))
+    # Silent trailing 'e' — subtract 1 if the word ends in 'e' and has >1 vowel cluster
+    if word.endswith("e") and count > 1:
+        count -= 1
+    return max(1, count)
+
+
+def flesch_kincaid_grade(text: str) -> float:
+    """Return the Flesch-Kincaid grade level for *text* (English).
+
+    Formula: 0.39 × (words/sentences) + 11.8 × (syllables/words) − 15.59
+    Returns 0.0 for empty or one-word inputs.
+    """
+    sentences = _sentences(text)
+    if not sentences:
+        return 0.0
+    words = text.split()
+    if not words:
+        return 0.0
+    syllable_total = sum(_count_syllables(w) for w in words)
+    asl = len(words) / len(sentences)   # average sentence length
+    asw = syllable_total / len(words)   # average syllables per word
+    grade = 0.39 * asl + 11.8 * asw - 15.59
+    return round(max(0.0, grade), 1)
+
+
+# ---------------------------------------------------------------------------
+# Safety-net translate helper
+# ---------------------------------------------------------------------------
+
+
+def _translate_strings(strings: list[str], language: str, ask_fn: Callable) -> list[str]:
+    """Translate a list of strings into *language* in one AI call.
+
+    Returns a list of the same length.  Falls back to the original strings on
+    any parse failure so callers never crash.
+    """
+    if not strings or language == "English":
+        return strings
+    payload = json.dumps(strings, ensure_ascii=False)
+    system = (
+        f"You are a translator. Translate every string in the JSON array into {language}. "
+        f"Return ONLY a valid JSON array with the same number of items in the same order. "
+        f"All items MUST be in {language}."
+    )
+    prompt = f"Translate these strings into {language}:\n{payload}"
+    try:
+        answer = ask_fn(prompt, system=system, json_mode=True)
+        result = _parse_json(answer.text)
+        if isinstance(result, list) and len(result) == len(strings):
+            return [str(r) if r else s for r, s in zip(result, strings, strict=True)]
+    except Exception:  # noqa: BLE001
+        pass
+    return strings
+
+
+# ---------------------------------------------------------------------------
 # AI summarisation
 # ---------------------------------------------------------------------------
 
-_SUMMARISE_SYSTEM = (
-    "You are a plain-language tutor helping adult students who are English-language learners. "
-    "Use ONLY the passages provided. Write in simple, clear English (aim for 8th-grade level). "
-    "For every bullet:\n"
-    "  - 'text' is a SHORT plain-language paraphrase (1–2 sentences, NOT copied word-for-word)\n"
-    "  - 'passage_id' is the passage id (e.g. P1) where the idea comes from\n"
-    "  - 'proof' is the EXACT supporting sentence copied WORD-FOR-WORD from that passage\n"
-    "Return ONLY valid JSON: "
-    '{"bullets": [{"text": "plain paraphrase", "passage_id": "P1", "proof": "exact copied sentence"}, ...]}'
-    " Aim for 5 bullets."
-)
+_LEVEL_INSTRUCTIONS = {
+    "Simple": (
+        "SIMPLE LEVEL — three rules only: "
+        "(1) Write short sentences of about 10 words each. "
+        "(2) Use only everyday words a 10-year-old knows. "
+        "(3) When a course term appears (e.g. 'supply chain'), explain it in a second short sentence. "
+        "GOOD example: 'A supply chain moves goods from farms to stores. It has many steps.' "
+        "Use this same approach for every bullet."
+    ),
+    "Standard": (
+        "Write in clear, plain English at approximately an 8th-grade reading level."
+    ),
+}
 
-_QUESTIONS_SYSTEM = (
-    "You are a plain-language tutor creating multiple-choice practice questions for adult students "
-    "who are English-language learners. "
-    "Use ONLY the passages provided. Write in simple, clear English. "
-    "For every question, cite the passage id and copy the proof sentence WORD-FOR-WORD from that passage. "
-    "Return ONLY valid JSON: "
-    '{"questions": [{"stem": "...", "options": ["A", "B", "C", "D"], "correct_index": 0, '
-    '"passage_id": "P1", "proof_text": "...exact sentence..."}, ...]}'
-    " Aim for 5 questions."
-)
+
+def _build_summarise_system(level: str = "Simple", language: str = "English") -> str:
+    level_instr = _LEVEL_INSTRUCTIONS.get(level, _LEVEL_INSTRUCTIONS["Standard"])
+    if language == "English":
+        lang_field = "'text': a plain-language paraphrase in English"
+        lang_tail = ""
+    else:
+        lang_field = f"'text': the bullet written in {language}"
+        lang_tail = (
+            f"All 'text' values MUST be in {language}. "
+            "'text_en' is the English version. "
+            "'proof' stays in the original English, copied word for word."
+        )
+    return (
+        "You are a plain-language tutor helping adult students who are English-language learners. "
+        "Use ONLY the passages provided. "
+        f"{level_instr} "
+        "For every bullet:\n"
+        f"  - {lang_field} (1–2 sentences, NOT copied word-for-word)\n"
+        "  - 'text_en' is the same paraphrase in English (required even if language is English)\n"
+        "  - 'passage_id' is the passage id (e.g. P1) where the idea comes from\n"
+        "  - 'proof' is the EXACT supporting sentence copied WORD-FOR-WORD from that passage IN ENGLISH\n"
+        "Return ONLY valid JSON: "
+        '{"bullets": [{"text": "...", "text_en": "...", "passage_id": "P1", "proof": "exact English sentence"}, ...]}'
+        " Aim for 5 bullets. "
+        f"{lang_tail}"
+    )
+
+
+def _build_questions_system(level: str = "Simple", language: str = "English") -> str:
+    level_instr = _LEVEL_INSTRUCTIONS.get(level, _LEVEL_INSTRUCTIONS["Standard"])
+    if language == "English":
+        lang_field_stem = "'stem': the question written in English"
+        lang_field_opts = "'options': the four answer choices in English"
+        lang_tail = ""
+    else:
+        lang_field_stem = f"'stem': the question written in {language}"
+        lang_field_opts = f"'options': the four answer choices in {language}"
+        lang_tail = (
+            f"All 'stem' and 'options' values MUST be in {language}. "
+            "'stem_en' and 'options_en' are the English versions. "
+            "'proof_text' stays in the original English, copied word for word."
+        )
+    return (
+        "You are a plain-language tutor creating multiple-choice practice questions for adult students "
+        "who are English-language learners. "
+        "Use ONLY the passages provided. "
+        f"{level_instr} "
+        "For every question:\n"
+        f"  - {lang_field_stem}\n"
+        "  - 'stem_en' is the same question in English\n"
+        f"  - {lang_field_opts}\n"
+        "  - 'options_en' are the same choices in English\n"
+        "  - 'correct_index' is the 0-based index of the correct option\n"
+        "  - 'passage_id' is the passage id (e.g. P1) where the answer comes from\n"
+        "  - 'proof_text' is the EXACT sentence copied WORD-FOR-WORD from that passage IN ENGLISH\n"
+        "Return ONLY valid JSON: "
+        '{"questions": [{"stem": "...", "stem_en": "...", '
+        '"options": ["A","B","C","D"], "options_en": ["A","B","C","D"], '
+        '"correct_index": 0, "passage_id": "P1", '
+        '"proof_text": "...exact English sentence..."}, ...]}'
+        f" Aim for 5 questions. {lang_tail}"
+    )
+
+
+def _build_glossary_system(language: str = "English") -> str:
+    lang_instr = (
+        f"Write definitions in {language}. "
+        "Keep the English term alongside the definition even if the definition is in another language. "
+        if language != "English"
+        else ""
+    )
+    return (
+        "You are a vocabulary tutor. Given course reading passages, identify the 5 most important "
+        "subject-specific terms a student must understand. For each term provide a one-sentence plain "
+        "definition a 10-year-old could understand. "
+        f"{lang_instr}"
+        "Return ONLY valid JSON: "
+        '{"terms": [{"term_en": "English term", "term": "term in target language", '
+        '"definition": "one plain sentence"}, ...]}'
+    )
 
 
 def _passages_prompt(passages: dict[str, str]) -> str:
@@ -278,23 +426,30 @@ def _passages_prompt(passages: dict[str, str]) -> str:
     return "\n\n".join(parts)
 
 
-def summarise(passages: dict[str, str], ask_fn: Callable) -> dict:
+def summarise(
+    passages: dict[str, str],
+    ask_fn: Callable,
+    level: str = "Simple",
+    language: str = "English",
+) -> dict:
     """Return verified summary bullets + metadata.
 
     Returns:
         {
-          "bullets": [{"text": str, "passage_id": str, "proof": str}],
+          "bullets": [{"text": str, "text_en": str, "passage_id": str, "proof": str}],
           "dropped": int,
           "backend": str,
         }
+    proof is always English (copied word-for-word); text/text_en carry the language.
     """
+    system = _build_summarise_system(level, language)
     prompt = (
         "Summarise the following reading in 5 bullet points for an English-language learner. "
-        "Plain English only. Each bullet must have a short paraphrase (text), the passage id, "
-        "and the exact proof sentence copied word-for-word.\n\n"
+        "Each bullet must have a short paraphrase (text), the English version (text_en), "
+        "the passage id, and the exact proof sentence copied word-for-word IN ENGLISH.\n\n"
         + _passages_prompt(passages)
     )
-    answer = ask_fn(prompt, system=_SUMMARISE_SYSTEM, json_mode=True)
+    answer = ask_fn(prompt, system=system, json_mode=True)
     backend = answer.backend
 
     parsed = _parse_json(answer.text)
@@ -313,9 +468,13 @@ def summarise(passages: dict[str, str], ask_fn: Callable) -> dict:
         # Normalise field: accept both "proof" and legacy "proof_text"
         if "proof_text" in item and "proof" not in item:
             item["proof"] = item.pop("proof_text")
+        # Ensure text_en exists (fall back to text if missing)
+        if "text_en" not in item:
+            item["text_en"] = item.get("text", "")
         # Also strip the [P3] ... [P3] pattern from text (Fix #2)
-        if "text" in item:
-            item["text"] = re.sub(r"\s*\[P\d+\]\s*", " ", item["text"]).strip()
+        for field in ("text", "text_en"):
+            if field in item:
+                item[field] = re.sub(r"\s*\[P\d+\]\s*", " ", item[field]).strip()
 
         result = _correct_or_drop_bullet(item, passages)
         if result is not None:
@@ -333,26 +492,49 @@ def summarise(passages: dict[str, str], ask_fn: Callable) -> dict:
             if len(verified) >= 5:
                 break
 
+    # Safety net: if language != English and most 'text' values look identical to 'text_en'
+    # (i.e. the model returned English instead of translating), make one extra translate call.
+    if language != "English":
+        untranslated = [
+            i for i, b in enumerate(verified)
+            if b.get("text", "").strip() == b.get("text_en", "").strip()
+            and b.get("text", "").strip()
+        ]
+        if len(untranslated) >= len(verified) // 2 + 1:
+            strings_to_translate = [verified[i]["text"] for i in untranslated]
+            translated = _translate_strings(strings_to_translate, language, ask_fn)
+            for idx, t in zip(untranslated, translated, strict=True):
+                if t:
+                    verified[idx]["text"] = t
+
     return {"bullets": verified[:5], "dropped": dropped, "backend": backend}
 
 
-def make_questions(passages: dict[str, str], ask_fn: Callable) -> dict:
+def make_questions(
+    passages: dict[str, str],
+    ask_fn: Callable,
+    level: str = "Simple",
+    language: str = "English",
+) -> dict:
     """Return verified MCQ list + metadata.
 
     Returns:
         {
-          "questions": [{"stem", "options", "correct_index", "passage_id", "proof_text"}],
+          "questions": [{"stem", "stem_en", "options", "options_en",
+                         "correct_index", "passage_id", "proof_text"}],
           "dropped": int,
           "backend": str,
         }
+    proof_text is always English (word-for-word from the source).
     """
+    system = _build_questions_system(level, language)
     prompt = (
         "Create 5 multiple-choice questions from the following reading. "
         "Each question must have exactly 4 options (A, B, C, D) and one correct answer. "
-        "Plain English only.\n\n"
+        "Include stem_en and options_en in English too.\n\n"
         + _passages_prompt(passages)
     )
-    answer = ask_fn(prompt, system=_QUESTIONS_SYSTEM, json_mode=True)
+    answer = ask_fn(prompt, system=system, json_mode=True)
     backend = answer.backend
 
     parsed = _parse_json(answer.text)
@@ -376,6 +558,11 @@ def make_questions(passages: dict[str, str], ask_fn: Callable) -> dict:
             except ValueError:
                 ci = 0
         item["correct_index"] = ci
+        # Ensure English fallbacks exist
+        if "stem_en" not in item:
+            item["stem_en"] = item.get("stem", "")
+        if "options_en" not in item:
+            item["options_en"] = item.get("options", [])
         # Fix #3: correct or drop based on all-passage search
         result = _correct_or_drop_question(item, passages)
         if result is not None:
@@ -391,7 +578,93 @@ def make_questions(passages: dict[str, str], ask_fn: Callable) -> dict:
                 break
             verified.append(q)
 
+    # Safety net: if language != English and most 'stem' values are still in English, translate.
+    if language != "English":
+        untranslated_q = [
+            i for i, q in enumerate(verified)
+            if q.get("stem", "").strip() == q.get("stem_en", "").strip()
+            and q.get("stem", "").strip()
+        ]
+        if len(untranslated_q) >= len(verified) // 2 + 1:
+            stems = [verified[i]["stem"] for i in untranslated_q]
+            translated_stems = _translate_strings(stems, language, ask_fn)
+            # Also translate options for the same items
+            opts_flat = [opt for i in untranslated_q for opt in verified[i].get("options", [])]
+            translated_opts_flat = _translate_strings(opts_flat, language, ask_fn)
+            opt_cursor = 0
+            for list_idx, q_idx in enumerate(untranslated_q):
+                if translated_stems[list_idx]:
+                    verified[q_idx]["stem"] = translated_stems[list_idx]
+                n_opts = len(verified[q_idx].get("options", []))
+                if translated_opts_flat[opt_cursor : opt_cursor + n_opts]:
+                    verified[q_idx]["options"] = translated_opts_flat[opt_cursor : opt_cursor + n_opts]
+                opt_cursor += n_opts
+
     return {"questions": verified[:5], "dropped": dropped, "backend": backend}
+
+
+def make_glossary(
+    passages: dict[str, str],
+    ask_fn: Callable,
+    language: str = "English",
+) -> dict:
+    """Return a 5-term glossary. Falls back to offline if AI unavailable.
+
+    Returns:
+        {
+          "terms": [{"term_en": str, "term": str, "definition": str}],
+          "backend": str,
+        }
+    """
+    system = _build_glossary_system(language)
+    prompt = (
+        "Identify the 5 most important subject-specific terms in this reading and define each "
+        "in one plain sentence. Include the term in English and in the target language.\n\n"
+        + _passages_prompt(passages)
+    )
+    answer = ask_fn(prompt, system=system, json_mode=True)
+    backend = answer.backend
+
+    if backend == "offline":
+        return {"terms": offline_glossary(passages), "backend": backend}
+
+    parsed = _parse_json(answer.text)
+    terms: list[dict] = []
+    if isinstance(parsed, dict):
+        terms = parsed.get("terms", [])
+    elif isinstance(parsed, list):
+        terms = parsed
+
+    # Normalise and filter
+    result_terms: list[dict[str, Any]] = []
+    for t in terms:
+        if not isinstance(t, dict):
+            continue
+        entry: dict[str, Any] = {
+            "term_en": t.get("term_en") or t.get("term", ""),
+            "term": t.get("term") or t.get("term_en", ""),
+            "definition": t.get("definition", ""),
+        }
+        if entry["term"] and entry["definition"]:
+            result_terms.append(entry)
+
+    if not result_terms:
+        result_terms = offline_glossary(passages)
+
+    # Safety net: if language != English and all definitions look like English, translate them.
+    if language != "English":
+        untranslated_defs = [
+            i for i, t in enumerate(result_terms)
+            if t.get("definition", "").strip() and t.get("term", "") == t.get("term_en", "")
+        ]
+        if len(untranslated_defs) >= len(result_terms) // 2 + 1:
+            defs = [result_terms[i]["definition"] for i in untranslated_defs]
+            translated_defs = _translate_strings(defs, language, ask_fn)
+            for list_idx, term_idx in enumerate(untranslated_defs):
+                if translated_defs[list_idx]:
+                    result_terms[term_idx]["definition"] = translated_defs[list_idx]
+
+    return {"terms": result_terms[:5], "backend": backend}
 
 
 # ---------------------------------------------------------------------------
@@ -403,7 +676,7 @@ def offline_summary(passages: dict[str, str]) -> list[dict]:
     """Deterministic fallback — works with no AI model.
 
     Builds one bullet per passage from the first full sentence of that passage.
-    Uses the new {text, passage_id, proof} shape (Fix #2).
+    Uses the new {text, text_en, passage_id, proof} shape.
     """
     bullets: list[dict] = []
     for pid, text in passages.items():
@@ -412,7 +685,7 @@ def offline_summary(passages: dict[str, str]) -> list[dict]:
             continue
         proof = sents[0]
         # Simple plain-English paraphrase: just use the first sentence as the bullet
-        bullets.append({"text": proof, "passage_id": pid, "proof": proof})
+        bullets.append({"text": proof, "text_en": proof, "passage_id": pid, "proof": proof})
     return bullets
 
 
@@ -471,7 +744,9 @@ def offline_questions(passages: dict[str, str]) -> list[dict]:
         questions.append(
             {
                 "stem": stem,
+                "stem_en": stem,
                 "options": options,
+                "options_en": options,
                 "correct_index": 0,
                 "passage_id": pid,
                 "proof_text": key_sent,
@@ -479,6 +754,33 @@ def offline_questions(passages: dict[str, str]) -> list[dict]:
         )
 
     return questions
+
+
+def offline_glossary(passages: dict[str, str]) -> list[dict]:
+    """Deterministic glossary fallback — 5 longest repeated content words with example sentence."""
+    all_text = " ".join(passages.values())
+    words = re.findall(r"\b[a-zA-Z]{5,}\b", all_text.lower())
+    # Count word frequencies (skip common stop words)
+    _STOP = {
+        "which", "their", "there", "these", "those", "about", "would", "could",
+        "should", "where", "every", "other", "after", "before", "while", "since",
+        "being", "having", "doing", "making", "taking", "using", "place", "thing",
+        "often", "within", "between", "through", "around", "along", "above",
+    }
+    freq: dict[str, int] = {}
+    for w in words:
+        if w not in _STOP:
+            freq[w] = freq.get(w, 0) + 1
+
+    top_terms = sorted(freq, key=lambda w: (-freq[w], -len(w)))[:5]
+
+    # For each term, find the first sentence it appears in
+    all_sents = _sentences(all_text)
+    result: list[dict] = []
+    for term in top_terms:
+        example = next((s for s in all_sents if term.lower() in s.lower()), all_text[:80])
+        result.append({"term_en": term, "term": term, "definition": example})
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -491,34 +793,43 @@ def _text_hash(text: str) -> str:
 
 
 @lru_cache(maxsize=32)
-def _cached_study(text_hash: str, text: str, provider_name: str) -> dict:  # noqa: ARG001 (hash is the cache key)
+def _cached_study(
+    text_hash: str,  # noqa: ARG001 (hash is the cache key)
+    text: str,
+    provider_name: str,  # noqa: ARG001
+    level: str = "Simple",
+    language: str = "English",
+) -> dict:
     from lib.ai import ask
 
     passages = split_passages(text)
 
-    # Run summarise and make_questions concurrently (Fix #5)
-    with ThreadPoolExecutor(max_workers=2) as pool:
-        f_summary = pool.submit(summarise, passages, ask)
-        f_questions = pool.submit(make_questions, passages, ask)
+    # Run summarise, make_questions, and make_glossary concurrently (all three in one spinner)
+    with ThreadPoolExecutor(max_workers=3) as pool:
+        f_summary = pool.submit(summarise, passages, ask, level, language)
+        f_questions = pool.submit(make_questions, passages, ask, level, language)
+        f_glossary = pool.submit(make_glossary, passages, ask, language)
         summary = f_summary.result()
         questions = f_questions.result()
+        glossary = f_glossary.result()
 
     return {
         "passages": passages,
         "summary": summary,
         "questions": questions,
+        "glossary": glossary,
     }
 
 
-def study(text: str) -> dict:
-    """All-in-one entry point.  Results are cached per (text, AI_PROVIDER).
+def study(text: str, level: str = "Simple", language: str = "English") -> dict:
+    """All-in-one entry point.  Results are cached per (text, level, language, AI_PROVIDER).
 
     Accepts the BODY text (after strip_metadata has been called).
     """
     import os
 
     provider_name = os.getenv("AI_PROVIDER", "offline")
-    return _cached_study(_text_hash(text), text, provider_name)
+    return _cached_study(_text_hash(text), text, provider_name, level, language)
 
 
 # ---------------------------------------------------------------------------
@@ -584,10 +895,13 @@ __all__ = [
     "split_passages",
     "summarise",
     "make_questions",
+    "make_glossary",
     "offline_summary",
     "offline_questions",
+    "offline_glossary",
     "study",
     "fingerprint_check",
     "highlight_proof",
+    "flesch_kincaid_grade",
     "textwrap",  # re-exported for tests
 ]

@@ -14,12 +14,15 @@ import pathlib
 from typing import Any
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 from lib import config
 from lib.ai import ask
 from lib.study import (
     fingerprint_check,
+    flesch_kincaid_grade,
     highlight_proof,
+    make_glossary,
     make_questions,
     split_passages,
     strip_metadata,
@@ -202,6 +205,8 @@ if "summary_result" not in st.session_state:
     st.session_state["summary_result"] = None
 if "questions_result" not in st.session_state:
     st.session_state["questions_result"] = None
+if "glossary_result" not in st.session_state:
+    st.session_state["glossary_result"] = None
 if "checked" not in st.session_state:
     st.session_state["checked"] = {}  # q_index -> bool (True = correct, False = wrong)
 if "answers" not in st.session_state:
@@ -213,6 +218,30 @@ if "night_sets" not in st.session_state:
 # ── Single "Make my study set" button (Fix #5) ────────────────────────────────
 st.divider()
 st.markdown("### 2 · Build your study set")
+
+# ── F1: Reading-level and language controls ───────────────────────────────────
+_lang_labels = [lbl for lbl, _ in config.SUPPORTED_LANGUAGES]
+_lang_bcp47 = {lbl: code for lbl, code in config.SUPPORTED_LANGUAGES}
+
+col_level, col_lang = st.columns(2)
+with col_level:
+    reading_level = st.radio(
+        "Reading level",
+        options=config.READING_LEVELS,
+        index=0,
+        horizontal=True,
+        help="Simple: short sentences, everyday words (Grade 5–6). Standard: Grade 8–9.",
+    )
+with col_lang:
+    language = st.selectbox(
+        "Language",
+        options=_lang_labels,
+        index=0,
+    )
+
+show_english = False
+if language != "English":
+    show_english = st.toggle("Show English too", value=False)
 
 can_build = len(body_text.strip()) >= 50
 do_build = st.button(
@@ -228,29 +257,63 @@ if do_build:
     st.session_state["passages"] = passages
     st.session_state["checked"] = {}
     st.session_state["answers"] = {}
+    st.session_state["reading_level"] = reading_level
+    st.session_state["language"] = language
     hour = __import__("datetime").datetime.now().hour
     if 21 <= hour or hour < 6:
         st.session_state["night_sets"] = st.session_state.get("night_sets", 0) + 1
-    # Fix #5: single spinner, concurrent AI calls via study()
+    # Single spinner — all three AI calls run concurrently
     with st.spinner("Making your study set (about 15 seconds)…"):
-        sum_result = summarise(passages, ask)
-        q_result = make_questions(passages, ask)
+        from concurrent.futures import ThreadPoolExecutor as _TPE
+
+        with _TPE(max_workers=3) as _pool:
+            _fs = _pool.submit(summarise, passages, ask, reading_level, language)
+            _fq = _pool.submit(make_questions, passages, ask, reading_level, language)
+            _fg = _pool.submit(make_glossary, passages, ask, language)
+            sum_result = _fs.result()
+            q_result = _fq.result()
+            gloss_result = _fg.result()
     st.session_state["summary_result"] = sum_result
     st.session_state["questions_result"] = q_result
+    st.session_state["glossary_result"] = gloss_result
+    st.session_state["body_text_hash"] = body_text  # used for FK grade of original
 
-# ── Summary display (Fix #2) ──────────────────────────────────────────────────
+# ── Summary display (Fix #2 + F1) ─────────────────────────────────────────────
 summary_result = st.session_state.get("summary_result")
+_stored_level = st.session_state.get("reading_level", "Simple")
+_stored_lang = st.session_state.get("language", "English")
+
 if summary_result:
     bullets = summary_result.get("bullets", [])
     dropped = summary_result.get("dropped", 0)
     backend = summary_result.get("backend", "offline")
 
     st.markdown("#### Summary")
+
+    # ── F1: Flesch-Kincaid grade caption ─────────────────────────────────────
+    _orig_text = st.session_state.get("body_text_hash", "")
+    if _orig_text:
+        _grade_before = flesch_kincaid_grade(_orig_text)
+        # Collect English summary text for FK after
+        _summary_en_text = " ".join(
+            b.get("text_en") or b.get("text", "") for b in bullets
+        )
+        _grade_after = flesch_kincaid_grade(_summary_en_text) if _summary_en_text else 0.0
+        if _grade_before > 0 and _grade_after > 0:
+            st.caption(
+                f"📊 Reading level: Grade {_grade_before} (original) → Grade {_grade_after} (your summary)"
+            )
+
+    # ── Bullets ───────────────────────────────────────────────────────────────
     for b in bullets:
         pid = b.get("passage_id", "")
-        # Fix #2: show plain-language text + single passage tag
         st.markdown(f"• {b['text']}  `[{pid}]`")
-        # Fix #2: proof in a small expander
+        # F1: Show English too (when non-English and toggle is on)
+        if show_english and _stored_lang != "English":
+            en_text = b.get("text_en", "")
+            if en_text and en_text != b["text"]:
+                st.caption(f"🇬🇧 {en_text}")
+        # Proof in a small expander
         proof = b.get("proof") or b.get("proof_text", "")
         if proof:
             with st.expander("Where is this in my reading?"):
@@ -258,6 +321,49 @@ if summary_result:
 
     if dropped:
         st.caption(f"ℹ️ {dropped} AI item(s) could not be verified against your reading and were removed.")
+
+    # ── F1: Read aloud button ─────────────────────────────────────────────────
+    if bullets:
+        _aloud_text = " ".join(b.get("text", "") for b in bullets)
+        _bcp47 = _lang_bcp47.get(_stored_lang, "en-US")
+        _safe_text = _aloud_text.replace("\\", "\\\\").replace("`", "\\`").replace("$", "\\$")
+        if st.button("🔊 Read aloud", key="read_aloud_btn"):
+            components.html(
+                f"""<script>
+                (function(){{
+                    if (!window.speechSynthesis) return;
+                    window.speechSynthesis.cancel();
+                    var u = new SpeechSynthesisUtterance(`{_safe_text}`);
+                    u.lang = "{_bcp47}";
+                    u.rate = 0.85;
+                    window.speechSynthesis.speak(u);
+                }})();
+                </script>""",
+                height=0,
+            )
+
+    # ── F1: Offline language notice ───────────────────────────────────────────
+    if backend == "offline" and _stored_lang != "English":
+        st.info(
+            "ℹ️ **Offline mode** — language and reading-level preferences are noted but "
+            "the AI is not available right now, so the summary is in English. "
+            "Connect to an AI backend to get your summary in the chosen language."
+        )
+
+    # ── F1: Glossary expander ─────────────────────────────────────────────────
+    glossary_result = st.session_state.get("glossary_result")
+    if glossary_result:
+        terms = glossary_result.get("terms", [])
+        if terms:
+            with st.expander("📚 5 key words, explained simply"):
+                for t in terms:
+                    term_display = t.get("term", t.get("term_en", ""))
+                    term_en = t.get("term_en", "")
+                    defn = t.get("definition", "")
+                    if _stored_lang != "English" and term_en and term_en != term_display:
+                        st.markdown(f"**{term_display}** *(EN: {term_en})* — {defn}")
+                    else:
+                        st.markdown(f"**{term_display}** — {defn}")
 
     st.caption(f"🤖 Powered by **{backend}** · AI can make mistakes — every answer is checked against your reading.")
 
@@ -286,6 +392,11 @@ if q_result:
 
     for i, q in enumerate(questions):
         st.markdown(f"**Q{i + 1}. {q['stem']}**  `[{q.get('passage_id', '')}]`")
+        # F1: Show English stem when non-English and toggle is on
+        if show_english and _stored_lang != "English":
+            stem_en = q.get("stem_en", "")
+            if stem_en and stem_en != q["stem"]:
+                st.caption(f"🇬🇧 {stem_en}")
         opts = q.get("options", [])
         radio_key = f"radio_{i}"
 
