@@ -137,6 +137,8 @@ pydantic-core==2.50.5
     # via pydantic
 pydeck==0.9.3
     # via streamlit
+pypdf==7.1.1
+    # via ivytech-2030
 python-dateutil==3.0.0 ; python_full_version < '3.11'
     # via pandas
 python-dateutil==4.0.0 ; python_full_version >= '3.11'
@@ -205,6 +207,7 @@ typing-extensions==4.16.0
     #   opentelemetry-api
     #   pydantic
     #   pydantic-core
+    #   pypdf
     #   referencing
     #   starlette
     #   streamlit
