@@ -1,0 +1,12 @@
+Introduction to Computer Networking — CIT 110, Week 1
+Fictional course reading created for the Ivy Tech 2030 Innovation Squad prototype.
+All companies, people, and events described below are entirely invented.
+
+[P1]
+A computer network is a group of two or more devices that are connected so they can share information and resources. The devices in a network can be computers, phones, printers, or any other electronic equipment that can send and receive data. Networks allow people in different rooms, buildings, or countries to share files, send messages, and use the same printer or internet connection. Without networks, every device would have to work completely on its own, and sharing even a single document would require copying it to a physical drive and carrying that drive from one machine to another.
+
+[P2]
+Networks are classified by how large an area they cover. A Local Area Network, or LAN, connects devices within a small area such as a single office, home, or school building. A Wide Area Network, or WAN, connects devices across cities, countries, or even continents. The internet is the largest WAN in the world. A Metropolitan Area Network, or MAN, falls in between — it covers a city or a college campus. Each type of network uses different equipment and different rules, called protocols, to move data reliably from one device to another.
+
+[P3]
+Data travels across a network in small pieces called packets. When you send an email, your computer breaks the message into packets, labels each packet with where it is going, and sends them out onto the network. Routers are devices that read those labels and decide the fastest path for each packet to travel. When all the packets arrive at the other end, the receiving device reassembles them into the original message. This process happens so quickly — usually in less than a second — that it feels instant to the user. If a packet is lost along the way, the network automatically asks for it to be sent again.

@@ -54,13 +54,15 @@ def _claude(system: str, messages: list[dict]) -> str:
     return "".join(b.text for b in resp.content if b.type == "text").strip()
 
 
-def _granite(system: str, messages: list[dict]) -> str:
-    r = requests.post(
-        f"{OLLAMA_URL}/api/chat",
-        json={"model": GRANITE_MODEL, "stream": False,
-              "messages": [{"role": "system", "content": system}, *messages]},
-        timeout=120,
-    )
+def _granite(system: str, messages: list[dict], json_mode: bool = False) -> str:
+    payload: dict = {
+        "model": GRANITE_MODEL,
+        "stream": False,
+        "messages": [{"role": "system", "content": system}, *messages],
+    }
+    if json_mode:
+        payload["format"] = "json"
+    r = requests.post(f"{OLLAMA_URL}/api/chat", json=payload, timeout=120)
     r.raise_for_status()
     return r.json()["message"]["content"].strip()
 
@@ -77,12 +79,18 @@ def _offline(system: str, messages: list[dict]) -> str:
 BACKENDS = {"claude": _claude, "granite": _granite, "offline": _offline}
 
 
-def ask(prompt: str, system: str = "You are a concise, accurate assistant.",
-        history: list[dict] | None = None) -> Answer:
+def ask(
+    prompt: str,
+    system: str = "You are a concise, accurate assistant.",
+    history: list[dict] | None = None,
+    json_mode: bool = False,
+) -> Answer:
     messages = [*(history or []), {"role": "user", "content": prompt}]
     name = provider()
-    fn = BACKENDS.get(name, _offline)
     try:
+        if name == "granite":
+            return Answer(_granite(system, messages, json_mode=json_mode), name)
+        fn = BACKENDS.get(name, _offline)
         return Answer(fn(system, messages), name)
     except Exception as exc:  # demo safety: never crash the UI on an AI failure
         return Answer(_offline(system, messages), "offline", f"{name} failed: {type(exc).__name__}: {exc}")

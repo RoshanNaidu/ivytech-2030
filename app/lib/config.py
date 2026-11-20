@@ -1,25 +1,33 @@
-"""Project identity. FILL THIS IN DURING PHASE 1. Every page reads from here.
+"""Project identity — Single source of truth for the StudyBuddy prototype.
 
-Keeping the problem framing in one place means the whole app (titles, AI prompts,
-impact page) re-themes itself the moment the team agrees on the problem.
+Every page and AI prompt reads from here so the entire app re-themes itself
+when these values change.
 """
 
 TEAM_NAME = "Innovation Squad"
-PRODUCT_NAME = "Ivy 2030 Prototype"          # e.g. "PathFinder", "StayOnTrack"
-TAGLINE = "One-line promise to the person we serve."
+PRODUCT_NAME = "StudyBuddy"
+TAGLINE = "Plain-language study help, any hour, on any phone."
 
-# One of the four Strategic Plan 2030 pillars ("The Future of College"):
-#   "Academic & Instructional Quality" | "Career & Transfer Pathways"
-#   "Student-Centered Journey"         | "Innovation & Future Readiness"
-PILLAR = "TBD on challenge day"
+# Strategic Plan 2030 pillar
+PILLAR = "Academic & Instructional Quality"
 
-PERSONA = "TBD: the one person we serve (e.g. first-gen evening student, adviser, employer)"
-PROBLEM = "TBD: their problem in one sentence, in their words."
+# Statewide strategy (Strategic Plan 2030)
+STRATEGY = "Ensure Consistent Quality Across Learning Modalities"
 
-# The measurable 2030 outcome: metric, baseline, target, and the year.
-OUTCOME_METRIC = "TBD metric (e.g. fall-to-fall retention)"
-OUTCOME_BASELINE = 0.0      # current value, from the provided data if possible
-OUTCOME_TARGET = 0.0        # 2030 target
+# The person we serve
+PERSONA = "Lena — online working adult, ESL, phone-only, studies 11 pm–1 am"
+PROBLEM = (
+    "Dense academic readings on a small phone screen, no plain-language version, "
+    "no way to check understanding before the graded quiz, tutoring closed by 9 pm."
+)
+
+# 2030 outcome metric
+# ASSUMPTION: OUTCOME_BASELINE = 62.0 % is the assumed current online-course completion rate.
+# This must be confirmed with actual Ivy Tech data once it is provided on challenge day.
+# Source once confirmed: Ivy Tech semester-end completion records for online sections.
+OUTCOME_METRIC = "Online course completion rate"
+OUTCOME_BASELINE = 62.0      # ASSUMPTION — replace with real data on challenge day
+OUTCOME_TARGET = 70.0        # 2030 target (8-point lift)
 OUTCOME_UNIT = "%"
 
 # Statewide scale facts (Ivy Tech press release, Jul 2026). Used by the Impact page.

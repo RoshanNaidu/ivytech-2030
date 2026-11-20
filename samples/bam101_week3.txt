@@ -1,0 +1,12 @@
+Supply-Chain Risk Management — BAM 101, Week 3
+Fictional course reading created for the Ivy Tech 2030 Innovation Squad prototype.
+All companies, people, and events described below are entirely invented.
+
+[P1]
+Every business that makes or sells a product depends on a supply chain. A supply chain is the full set of steps needed to turn raw materials into something a customer can buy. Those steps usually include sourcing raw materials, manufacturing parts, assembling the final product, storing it in a warehouse, and delivering it to a store or home. Because so many steps are involved, something can go wrong at almost any point. Supply-chain risk is the chance that one of those steps will fail or slow down in a way that hurts the business.
+
+[P2]
+Risks in a supply chain come from many different sources. Natural events such as floods, earthquakes, and hurricanes can close ports or destroy factories. Political events such as trade disputes or new tariffs can raise the cost of imported parts overnight. A single supplier going out of business can leave a company with no way to build its product for weeks or months. Technology failures, such as a cyberattack on a shipping company, can cause packages to disappear or arrive late. Even something as simple as a truck driver shortage can delay deliveries and empty store shelves.
+
+[P3]
+Companies use several strategies to reduce supply-chain risk. Diversification means working with more than one supplier for every critical part, so that losing one supplier does not stop production. Safety stock is extra inventory kept on hand as a buffer against unexpected delays. Near-shoring means moving suppliers closer to the final assembly site, so that shorter distances lower the risk of long-distance disruptions. Scenario planning involves running "what if" exercises — for example, asking "what would we do if our main port closed for two weeks?" and writing down the answer before the emergency happens. Regular supplier audits help a company catch warning signs before a small problem becomes a crisis.

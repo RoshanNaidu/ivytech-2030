@@ -1,0 +1,16 @@
+[
+  {
+    "course": "BAM 101 — Business Administration Fundamentals",
+    "week": 3,
+    "title": "Supply-Chain Risk Management",
+    "assigned_by": "Prof. Sandra Morales",
+    "file": "bam101_week3.txt"
+  },
+  {
+    "course": "CIT 110 — IT Foundations",
+    "week": 1,
+    "title": "Introduction to Computer Networking",
+    "assigned_by": "Prof. David Chen",
+    "file": "cit110_week1.txt"
+  }
+]

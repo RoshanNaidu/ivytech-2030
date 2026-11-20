@@ -187,13 +187,13 @@ Lint with: `uv run ruff check app tests`
 
 ## Part 2 task checklist
 
-- [ ] **A** Create `app/lib/study.py` with `split_passages`, `summarise`, `make_questions`, verification logic, `offline_summary`, `offline_questions`
-- [ ] **A** Create `samples/bam101_week3.txt` (made-up supply-chain reading, ~400 words)
-- [ ] **A** Create `samples/cit110_week1.txt` (made-up networking reading, ~400 words)
-- [ ] **A** Create `samples/samples_index.json` with course/week/title/assigned_by for each sample
-- [ ] **C** Update `app/lib/config.py`: PRODUCT_NAME="StudyBuddy", TAGLINE, PERSONA, PILLAR, OUTCOME_METRIC, OUTCOME_BASELINE=62.0, OUTCOME_TARGET=70.0
-- [ ] **B** Rewrite `app/Home.py` as the study screen: dark theme CSS, course/week pickers, text area, Summarise button, summary render, Practice button, question render with proof reveal, stats row, "Ask a person" placeholder
-- [ ] **D** Create `tests/test_study.py` with all six unit tests from the test plan
-- [ ] **D** Confirm `uv run pytest -q` and `uv run ruff check app tests` pass with no errors
-- [ ] **D** Append BOB_LOG row for Part 2 work
+- [x] **A** Create `app/lib/study.py` with `split_passages`, `summarise`, `make_questions`, verification logic, `offline_summary`, `offline_questions`
+- [x] **A** Create `samples/bam101_week3.txt` (made-up supply-chain reading, ~400 words)
+- [x] **A** Create `samples/cit110_week1.txt` (made-up networking reading, ~400 words)
+- [x] **A** Create `samples/samples_index.json` with course/week/title/assigned_by for each sample
+- [x] **C** Update `app/lib/config.py`: PRODUCT_NAME="StudyBuddy", TAGLINE, PERSONA, PILLAR, OUTCOME_METRIC, OUTCOME_BASELINE=62.0, OUTCOME_TARGET=70.0
+- [x] **B** Rewrite `app/Home.py` as the study screen: dark theme CSS, course/week pickers, text area, Summarise button, summary render, Practice button, question render with proof reveal, stats row, "Ask a person" placeholder
+- [x] **D** Create `tests/test_study.py` with all six unit tests from the test plan (extended to 10 tests)
+- [x] **D** Confirm `uv run pytest -q` and `uv run ruff check app tests` pass with no errors
+- [x] **D** Append BOB_LOG row for Part 2 work
 - [ ] **Any** Manual smoke test on mobile viewport; offline demo test with `AI_PROVIDER=offline`
