@@ -88,7 +88,7 @@ Optional AI: copy `.env.example` to `.env` and set `AI_PROVIDER` (`granite` with
 |--------|------|--------------------|
 | Roshan Naidu | Lead / PM | Ran IBM Bob (Bob Shell) for all build phases, reviewed and tested output, demo |
 | Adesh Sanghera | Team member | Persona review, pilot feedback, demo |
-| MadFrank2006 | Team member | Testing on phone, pilot feedback, demo |
+| MadFrank2006 | Team member | Ran IBM Bob for all build phases but focused primarily on the front end development, persona creation, and developing a clear and actionable plan.  |
 | jhershfi-cpu | Team member | Impact story, demo |
 
 ## Repository map
